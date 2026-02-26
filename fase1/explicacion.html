@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicación del Servidor WildInfo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #27ae60;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #27ae60;
+            margin-top: 30px;
+        }
+        .analogy {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .code {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            overflow-x: auto;
+        }
+        .code .comment {
+            color: #a0a0a0;
+        }
+        .code .keyword {
+            color: #66d9ef;
+        }
+        .code .string {
+            color: #a6e22e;
+        }
+        .code .function {
+            color: #66d9ef;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #27ae60;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍐🍎 Explicación del Servidor WildInfo con Peras y Manzanas</h1>
+
+    <p>Imaginemos que el código FastAPI es como una <strong>tienda de frutas</strong>. Vamos a entender cada parte:</p>
+
+    <h2>🏪 La Tienda de Frutas (El Servidor)</h2>
+    
+    <div class="analogy">
+        <strong>🍐 Analogía:</strong> El servidor es como una tienda de frutas que está abierta 24/7. 
+        Los clientes (navegadores/apps) vienen a pedir frutas (datos) y la tienda les responde.
+    </div>
+
+    <h2>📦 Las Importaciones (Los Suministros)</h2>
+
+    <table>
+        <tr>
+            <th>Código</th>
+            <th>¿Qué hace?</th>
+            <th>Analogía</th>
+        </tr>
+        <tr>
+            <td><code>from fastapi import FastAPI, Request</code></td>
+            <td>Trae las herramientas de FastAPI</td>
+            <td>🛒 Compramos estanterías y caixas registradoras</td>
+        </tr>
+        <tr>
+            <td><code>from fastapi.middleware.cors import CORSMiddleware</td>
+            <td>Permite que otros accedan a la tienda</td>
+            <td>🚪 Ponemos un letrero de "Bienvenidos todos"</td>
+        </tr>
+        <tr>
+            <td><code>import time</code></td>
+            <td>Para medir el tiempo</td>
+            <td>⏰ Un reloj para ver cuánto tardamos</td>
+        </tr>
+    </table>
+
+    <h2>🏪 Creando la Tienda</h2>
+
+    <div class="code"><span class="keyword">app</span> = <span class="function">FastAPI</span>(<span class="string">title="WildInfo"</span>)</div>
+
+    <div class="analogy">
+        <strong>🍎 Analogía:</strong> Es como abrir una nueva tienda llamada "WildInfo" (información salvaje/vida silvestre).
+    </div>
+
+    <h2>🚪 La Puerta Abierta (CORS)</h2>
+
+    <div class="code">
+<span class="comment"># Configurar quién puede entrar</span>
+app.<span class="function">add_middleware</span>(
+    CORSMiddleware,
+    allow_origins=[<span class="string">"*"</span>],      <span class="comment"># Cualquier persona puede entrar</span>
+    allow_methods=[<span class="string">"*"</span>],      <span class="comment"># Puede pedir cualquier fruta</span>
+    allow_headers=[<span class="string">"*"</span>],      <span class="comment"># Cualquier forma de pedir</span>
+)
+    </div>
+
+    <div class="analogy">
+        <strong>🍐 Analogía:</strong> Es como decir: "¡Adelante, cualquiera puede entrar! No importa si quiere peras, manzanas, o bananas. Pueden pedir de cualquier forma - en voz alta, por teléfono, por escrito."
+    </div>
+
+    <h2>👁️ El Vigilante (Middleware)</h2>
+
+    <div class="code">
+<span class="keyword">@app.middleware</span>(<span class="string">"http"</span>)
+<span class="keyword">async def</span> <span class="function">log_requests</span>(request: Request, call_next):
+    start_time = <span class="function">time</span>.<span class="function">time</span>()
+    response = <span class="keyword">await</span> <span class="function">call_next</span>(request)
+    process_time = (<span class="function">time</span>.<span class="function">time</span>() - start_time) * <span class="string">1000</span>
+    
+    <span class="function">print</span>(<span class="string">f"DEBUG: {request.method} {request.url.path} - Status: {response.status_code} - {process_time:.2f}ms"</span>)
+    <span class="keyword">return</span> response
+    </div>
+
+    <div class="analogy">
+        <strong>🍎 Analogía:</strong> Es como un <strong>vigilante</strong> en la entrada que:
+        <ul>
+            <li>Anota la hora cuando alguien entra</li>
+            <li>Deja pasar al cliente</li>
+            <li>Cuando sale, anota: "Juan pidió 3 manzanas - tardó 50ms"</li>
+        </ul>
+    </div>
+
+    <h2>🍎 El Plato Principal (Endpoint)</h2>
+
+    <div class="code">
+<span class="keyword">@app.get</span>(<span class="string">"/"</span>)
+<span class="keyword">async def</span> <span class="function">root</span>():
+    <span class="keyword">return</span> {<span class="string">"message"</span>: <span class="string">"Servidor WildInfo Arriba"</span>, <span class="string">"status"</span>: <span class="string">200</span>}
+    </div>
+
+    <div class="analogy">
+        <strong>🍐 Analogía:</strong> Es como el cartel de la tienda que dice:
+        <blockquote>"¡La tienda de WildInfo está ABIERTA!" (código 200 = todo bien)</blockquote>
+        <p>Cuando alguien entra a la tienda (pide la raíz "/"), le respondemos con ese mensaje.</p>
+    </div>
+
+    <h2>▶️ Poniendo en Marcha la Tienda</h2>
+
+    <div class="code">
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="keyword">import</span> uvicorn
+    <span class="function">uvicorn</span>.<span class="function">run</span>(app, host=<span class="string">"0.0.0.0"</span>, port=<span class="string">8000</span>)
+    </div>
+
+    <div class="analogy">
+        <strong>🍎 Analogía:</strong> Es como decir:<br>
+        "¡Abran las puertas! La tienda estará en la dirección 0.0.0.0 (todas las direcciones) en el puerto 8000"
+        <ul>
+            <li><strong>0.0.0.0</strong> = La tienda tiene entradas en todas las calles</li>
+            <li><strong>Puerto 8000</strong> = Es como el número de tienda (8000)</li>
+        </ul>
+    </div>
+
+    <h2>📊 Resumen Visual</h2>
+
+    <table>
+        <tr>
+            <th>Concepto Técnico</th>
+            <th>Analogía de Frutas</th>
+            <th>¿Para qué sirve?</th>
+        </tr>
+        <tr>
+            <td>FastAPI</td>
+            <td>🍐 La tienda completa</td>
+            <td>Framework para crear APIs web</td>
+        </tr>
+        <tr>
+            <td>CORS</td>
+            <td>🚪 Puerta abierta</td>
+            <td>Permite conexiones desde cualquier lugar</td>
+        </tr>
+        <tr>
+            <td>Middleware</td>
+            <td>👁️ Vigilante</td>
+            <td>Intercepta y registra cada petición</td>
+        </tr>
+        <tr>
+            <td>Endpoint</td>
+            <td>🍎 Plato especial</td>
+            <td>Una ruta/respuesta específica</td>
+        </tr>
+        <tr>
+            <td>Uvicorn</td>
+            <td>🏪 El encargado</td>
+            <td>Servidor que corre la aplicación</td>
+        </tr>
+        <tr>
+            <td>Puerto 8000</td>
+            <td>📍 Número de local</td>
+            <td>Dirección donde escucha el servidor</td>
+        </tr>
+    </table>
+
+    <h2>🎯 ¿Cómo probarlo?</h2>
+    <ol>
+        <li>Abre una terminal y ejecuta: <code>python main.py</code></li>
+        <li>Abre tu navegador y ve a: <code>http://localhost:8000</code></li>
+        <li>¡Verás el mensaje JSON de la tienda!</li>
+    </ol>
+
+    <hr>
+    <p style="text-align: center; color: #7f8c8d;">
+        🍎🍐 <em>Así de simple es un servidor FastAPI - como una tienda de frutas abierta al mundo</em> 🍐🍎
+    </p>
+</body>
+</html>
