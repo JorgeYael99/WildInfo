@@ -1,7 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import time
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = FastAPI(title="WildInfo")
 
@@ -14,20 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def long_request (request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = (time.time() - start_time) * 1000
-
-    print(
-        f"DEBUG: {request.method} {request.url.path}"
-        f"- Status: {response.status_code}"
-        f"- {process_time:.2f}ms"
-    )
-
-    return response
-
 @app.get("/")
 async def root():
     return {"message": "Servidor WildInfo Arriba", "status": 200}
@@ -35,17 +25,18 @@ async def root():
 
 
 # --------------------------------------------------
-# 5. CONSUMO DE SERVICIO WEB EXTERNO (PokéAPI)
+# CONSUMO DE SERVICIO WEB EXTERNO (Ninjas API)
 # --------------------------------------------------
-@app.get("/wildinfo/{name}")
-async def get_animal(name: str):
-    external_url = f"https://api.api-ninjas.com/v1/animals?name={name.lower()}"
+@app.get("/wildinfo/{name_or_id}")
+async def get_animal(name_or_id: str):
+    external_url = f"https://api.api-ninjas.com/v1/animals?name={name_or_id.lower()}"
+    api_key = os.getenv("API_NINJS_KEY", "")
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(external_url)
+            response = await client.get(external_url, headers={"X-Api-Key": api_key})
 
-            print(f"DEBUG EXTERNO: PokéAPI respondió con {response.status_code}")
+            print(f"DEBUG EXTERNO: Ninjas API respondió con {response.status_code}")
 
             if response.status_code == 404:
                 raise HTTPException(
@@ -55,13 +46,11 @@ async def get_animal(name: str):
 
             data = response.json()
 
-            # Transformación / mapeo de datos
             animal_data = {
-                "nombre": data["name"],
-                "Reino": [t["type"]["name"] for t in data["types"]],
-                "altura": data["height"],
-                "peso": data["weight"],
-                "imagen": data["sprites"]["other"]["official-artwork"]["front_default"]
+                "nombre": data[0]["name"],
+                "reino": data[0]["taxonomy"]["kingdom"],
+                "clase": data[0]["taxonomy"]["class"],
+                "familia": data[0]["taxonomy"]["family"]
             }
 
             return animal_data
