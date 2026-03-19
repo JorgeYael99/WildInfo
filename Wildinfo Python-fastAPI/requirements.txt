@@ -2,3 +2,4 @@ fastapi
 httpx
 python-dotenv
 uvicorn
+asyncpg>=0.29.0

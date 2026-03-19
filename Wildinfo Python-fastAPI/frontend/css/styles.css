@@ -1,0 +1,242 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 100vh;
+    color: #fff;
+}
+
+header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2rem;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: #4ade80;
+    margin-bottom: 0.5rem;
+}
+
+header p {
+    color: #94a3b8;
+}
+
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.buscador {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.buscador input {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    width: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.buscador input::placeholder {
+    color: #94a3b8;
+}
+
+.buscador input:focus {
+    outline: none;
+    border-color: #4ade80;
+}
+
+.buscador button {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    background: #4ade80;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.buscador button:hover {
+    background: #22c55e;
+}
+
+.resultado {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.resultado.hidden {
+    display: none;
+}
+
+.animal-info {
+    flex: 1;
+}
+
+.animal-info h2 {
+    font-size: 2rem;
+    color: #4ade80;
+    margin-bottom: 1rem;
+}
+
+.detalles p {
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
+}
+
+.detalles strong {
+    color: #fff;
+}
+
+.wikipedia {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wikipedia h3 {
+    color: #a78bfa;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.wikipedia p {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.wikipedia a {
+    color: #818cf8;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.wikipedia a:hover {
+    text-decoration: underline;
+}
+
+.wikipedia.hidden {
+    display: none;
+}
+
+.animal-imagen {
+    flex: 1;
+}
+
+.animal-imagen img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.btn-guardar {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 1rem;
+    transition: background 0.3s;
+}
+
+.btn-guardar:hover {
+    background: #2563eb;
+}
+
+.favoritos {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.favoritos h2 {
+    margin-bottom: 1rem;
+    color: #fbbf24;
+}
+
+.lista-favoritos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.tarjeta-animal {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.tarjeta-animal:hover {
+    transform: translateY(-5px);
+}
+
+.tarjeta-animal img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.tarjeta-animal .info {
+    padding: 1rem;
+}
+
+.tarjeta-animal h3 {
+    color: #4ade80;
+    margin-bottom: 0.5rem;
+}
+
+.tarjeta-animal p {
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.tarjeta-vacia {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+@media (max-width: 768px) {
+    .resultado {
+        flex-direction: column;
+    }
+    
+    .buscador {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .buscador input {
+        width: 100%;
+        max-width: 300px;
+    }
+}

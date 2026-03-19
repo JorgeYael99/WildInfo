@@ -23,7 +23,8 @@ async def lifespan(app: FastAPI):
                     nombre VARCHAR(100) NOT NULL UNIQUE,
                     reino VARCHAR(50),
                     clase VARCHAR(50),
-                    familia VARCHAR(50)
+                    familia VARCHAR(50),
+                    url_imagen TEXT
                 )
             """)
         print("DEBUG: Base de datos PostgreSQL lista y conectada.")
@@ -44,6 +45,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    return {"message": "Servidor WildInfo Arriba", "status": 200}
 
 @app.get("/wildinfo/{name_or_id}")
 async def get_animal(name_or_id: str):
@@ -84,13 +89,14 @@ async def guardar_animal(animal: dict):
     async with app.state.db_pool.acquire() as connection:
         try:
             await connection.execute("""
-                INSERT INTO animales_guardados (nombre, reino, clase, familia)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO animales_guardados (nombre, reino, clase, familia, url_imagen)
+                VALUES ($1, $2, $3, $4, $5)
             """, 
                 animal.get("nombre"), 
                 animal.get("reino"), 
                 animal.get("clase"), 
-                animal.get("familia")
+                animal.get("familia"),
+                animal.get("url_imagen")
             )
             return {"status": "success", "message": f"{animal.get('nombre')} guardado en la BD."}
             
@@ -104,6 +110,58 @@ async def listar_animales():
         
         animales = [dict(row) for row in rows]
         return animales
+
+@app.get("/api/animal-imagen/{nombre}")
+async def obtener_imagen_animal(nombre: str):
+    access_key = os.getenv("UNSPLASH_ACCESS_KEY", "")
+    base_url = "https://api.unsplash.com"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{base_url}/search/photos",
+            headers={
+                "Accept-Version": "v1",
+                "Authorization": f"Client-ID {access_key}"
+            },
+            params={"query": nombre}
+        )
+        
+        if response.status_code == 200:
+            datos = response.json()
+            if datos["results"]:
+                return {
+                    "url_imagen": datos["results"][0]["urls"]["regular"],
+                    "descripcion": datos["results"][0]["alt_description"] or "Sin descripción"
+                }
+            else:
+                raise HTTPException(status_code=404, detail="No se encontraron imágenes")
+        else:
+            raise HTTPException(
+                status_code=response.status_code, 
+                detail=f"Error al obtener imagen de Unsplash: {response.text}"
+            )
+
+@app.get("/info-wikipedia/{nombre_animal}")
+async def obtener_info_wikipedia(nombre_animal: str):
+    url_wikipedia = f"https://es.wikipedia.org/api/rest_v1/page/summary/{nombre_animal}"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            url_wikipedia,
+            headers={"User-Agent": "WildInfoApp/1.0 (jorg.yael99@gmail.com)"}
+        )
+        
+        if response.status_code == 200:
+            datos = response.json()
+            return {
+                "nombre_oficial": datos.get("title"),
+                "resumen": datos.get("extract"),
+                "enlace_articulo": datos.get("content_urls", {}).get("desktop", {}).get("page")
+            }
+        elif response.status_code == 404:
+            raise HTTPException(status_code=404, detail=f"No se encontró: {nombre_animal}")
+        else:
+            raise HTTPException(status_code=502, detail="Error con Wikipedia")
 
 @app.middleware("/http")
 async def log_requests(request: Request, call_next):
