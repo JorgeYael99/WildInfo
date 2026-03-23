@@ -1,31 +1,47 @@
 const API_URL = 'http://localhost:8000';
-
 let animalActual = null;
 
 const animalInput = document.getElementById('animalInput');
+const suggestionsBox = document.getElementById('suggestions');
 const buscarBtn = document.getElementById('buscarBtn');
 const resultado = document.getElementById('resultado');
-const guardarBtn = document.getElementById('guardarBtn');
+const statusBadge = document.getElementById('statusBadge');
 const listaFavoritos = document.getElementById('listaFavoritos');
 
-const animalNombre = document.getElementById('animalNombre');
-const animalReino = document.getElementById('animalReino');
-const animalClase = document.getElementById('animalClase');
-const animalFamilia = document.getElementById('animalFamilia');
-const animalImagen = document.getElementById('animalImagen');
-const wikipedia = document.getElementById('wikipedia');
-const resumenWikipedia = document.getElementById('resumenWikipedia');
-const enlaceWikipedia = document.getElementById('enlaceWikipedia');
+animalInput.addEventListener('input', async (e) => {
+    const query = e.target.value.trim();
+    if (query.length < 2) {
+        suggestionsBox.classList.add('hidden');
+        return;
+    }
 
-buscarBtn.addEventListener('click', buscarAnimal);
-animalInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') buscarAnimal();
+    try {
+        const res = await fetch(`${API_URL}/buscar-sugerencias?q=${query}`);
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+            suggestionsBox.innerHTML = data.map(nombre => `
+                <div class="suggestion-item" onclick="seleccionarEspecie('${nombre}')">${nombre}</div>
+            `).join('');
+            suggestionsBox.classList.remove('hidden');
+        } else {
+            suggestionsBox.classList.add('hidden');
+        }
+    } catch (err) {
+        console.error("Error en sugerencias");
+    }
 });
-guardarBtn.addEventListener('click', guardarAnimal);
+
+window.seleccionarEspecie = (nombre) => {
+    animalInput.value = nombre;
+    suggestionsBox.classList.add('hidden');
+    buscarAnimal();
+};
 
 async function buscarAnimal() {
     const nombre = animalInput.value.trim();
     if (!nombre) return;
+    suggestionsBox.classList.add('hidden');
 
     try {
         const [infoRes, imagenRes] = await Promise.all([
@@ -34,13 +50,13 @@ async function buscarAnimal() {
         ]);
 
         if (!infoRes.ok) {
-            alert('Animal no encontrado');
+            alert('No se encontró la información');
             return;
         }
 
         const info = await infoRes.json();
-        const imagen = imagenRes.ok ? await imagenRes.json() : { url_imagen: '' };
-
+        const imagen = await imagenRes.json();
+        
         const wikiRes = await fetch(`${API_URL}/info-wikipedia/${encodeURIComponent(info.nombre)}`);
         const wiki = wikiRes.ok ? await wikiRes.json() : null;
 
@@ -51,83 +67,111 @@ async function buscarAnimal() {
             familia: info.familia,
             url_imagen: imagen.url_imagen || '',
             resumen: wiki ? wiki.resumen : '',
-            enlace_wikipedia: wiki ? wiki.enlace_articulo : ''
+            enlace_wikipedia: wiki ? wiki.enlace_articulo : '',
+            en_peligro: info.en_peligro
         };
 
-        mostrarResultado(animalActual, wiki);
+        mostrarResultado(animalActual);
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error al conectar con el servidor');
+        console.error(error);
     }
 }
 
-function mostrarResultado(animal, wiki) {
-    animalNombre.textContent = animal.nombre;
-    animalReino.textContent = animal.reino;
-    animalClase.textContent = animal.clase;
-    animalFamilia.textContent = animal.familia;
-    animalImagen.src = animal.url_imagen;
-    animalImagen.alt = `Imagen de ${animal.nombre}`;
+function mostrarResultado(animal) {
+    document.getElementById('animalNombre').textContent = animal.nombre;
+    document.getElementById('animalReino').textContent = animal.reino;
+    document.getElementById('animalClase').textContent = animal.clase;
+    document.getElementById('animalFamilia').textContent = animal.familia;
+    document.getElementById('animalImagen').src = animal.url_imagen;
     
-    if (wiki) {
-        resumenWikipedia.textContent = wiki.resumen;
-        enlaceWikipedia.href = wiki.enlace_articulo;
-        wikipedia.classList.remove('hidden');
+    if (animal.en_peligro) {
+        statusBadge.textContent = "ESPECIE PROTEGIDA / RIESGO";
+        statusBadge.classList.remove('hidden');
+        statusBadge.className = "badge danger";
     } else {
-        wikipedia.classList.add('hidden');
+        statusBadge.classList.add('hidden');
     }
-    
+
+    if (animal.resumen) {
+        document.getElementById('resumenWikipedia').textContent = animal.resumen;
+        document.getElementById('enlaceWikipedia').href = animal.enlace_wikipedia;
+        document.getElementById('wikipedia').classList.remove('hidden');
+    } else {
+        document.getElementById('wikipedia').classList.add('hidden');
+    }
+
     resultado.classList.remove('hidden');
 }
 
 async function guardarAnimal() {
     if (!animalActual) return;
-
     try {
         const res = await fetch(`${API_URL}/animales`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(animalActual)
         });
-
         if (res.ok) {
-            alert(`${animalActual.nombre} guardado en favoritos`);
             cargarFavoritos();
         } else {
-            const error = await res.json();
-            alert(error.detail || 'Error al guardar');
+            const err = await res.json();
+            alert(err.detail);
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error al conectar con el servidor');
+        console.error(error);
     }
 }
 
+// Nueva función para borrar de la BD
+async function eliminarFavorito(event, nombre) {
+    event.stopPropagation(); // Evita que se abra la ficha al hacer clic en borrar
+    if (!confirm(`¿Eliminar ${nombre} de tus favoritos?`)) return;
+
+    try {
+        const res = await fetch(`${API_URL}/animales/${encodeURIComponent(nombre)}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            cargarFavoritos();
+        } else {
+            alert("No se pudo eliminar");
+        }
+    } catch (error) {
+        console.error("Error al eliminar:", error);
+    }
+}
+
+// Actualización de la lista para incluir el botón de borrar
 async function cargarFavoritos() {
     try {
         const res = await fetch(`${API_URL}/animales`);
         const animales = await res.json();
-
-        if (animales.length === 0) {
-            listaFavoritos.innerHTML = '<p class="tarjeta-vacia">No hay animales guardados</p>';
+        
+        if (!animales.length) {
+            listaFavoritos.innerHTML = '<p class="tarjeta-vacia">Aún no tienes favoritos</p>';
             return;
         }
 
-        listaFavoritos.innerHTML = animales.map(animal => `
-            <div class="tarjeta-animal">
-                <img src="${animal.url_imagen || 'https://via.placeholder.com/300x150?text=Sin+imagen'}" alt="${animal.nombre}">
+        listaFavoritos.innerHTML = animales.map(a => `
+            <div class="tarjeta-animal" onclick="seleccionarEspecie('${a.nombre}')">
+                <button class="btn-eliminar" onclick="eliminarFavorito(event, '${a.nombre}')">×</button>
+                <img src="${a.url_imagen || 'https://via.placeholder.com/150'}" alt="${a.nombre}">
                 <div class="info">
-                    <h3>${animal.nombre}</h3>
-                    <p><strong>Reino:</strong> ${animal.reino}</p>
-                    <p><strong>Clase:</strong> ${animal.clase}</p>
-                    <p><strong>Familia:</strong> ${animal.familia}</p>
+                    <h3>${a.nombre}</h3>
+                    <p>${a.clase || 'Especie'}</p>
                 </div>
             </div>
         `).join('');
-    } catch (error) {
-        console.error('Error:', error);
-        listaFavoritos.innerHTML = '<p class="tarjeta-vacia">Error al cargar favoritos</p>';
+    } catch (err) {
+        console.error(err);
     }
 }
+
+buscarBtn.addEventListener('click', buscarAnimal);
+document.getElementById('guardarBtn').addEventListener('click', guardarAnimal);
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrapper')) suggestionsBox.classList.add('hidden');
+});
 
 cargarFavoritos();

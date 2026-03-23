@@ -12,10 +12,8 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db_url = os.getenv("DATABASE_URL")
-    
     try:
         app.state.db_pool = await asyncpg.create_pool(db_url)
-        
         async with app.state.db_pool.acquire() as connection:
             await connection.execute("""
                 CREATE TABLE IF NOT EXISTS animales_guardados (
@@ -27,14 +25,10 @@ async def lifespan(app: FastAPI):
                     url_imagen TEXT
                 )
             """)
-        print("DEBUG: Base de datos PostgreSQL lista y conectada.")
     except Exception as e:
-        print(f"ERROR conectando a PostgreSQL: {e}")
-        
+        print(f"ERROR: {e}")
     yield
-    
     await app.state.db_pool.close()
-    print("DEBUG: Conexión a PostgreSQL cerrada.")
 
 app = FastAPI(title="WildInfo", lifespan=lifespan)
 
@@ -46,43 +40,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Servidor WildInfo Arriba", "status": 200}
+API_NINJA_KEY = os.getenv("API_NINJS_KEY", "")
+
+@app.get("/buscar-sugerencias")
+async def buscar_sugerencias(q: str):
+    url = f"https://api.api-ninjas.com/v1/animals?name={q.lower()}"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers={"X-Api-Key": API_NINJA_KEY})
+        if response.status_code == 200:
+            data = response.json()
+            return [animal["name"] for animal in data[:5]]
+        return []
 
 @app.get("/wildinfo/{name_or_id}")
 async def get_animal(name_or_id: str):
-    external_url = f"https://api.api-ninjas.com/v1/animals?name={name_or_id.lower()}"
-    api_key = os.getenv("API_NINJS_KEY", "")
-
+    url = f"https://api.api-ninjas.com/v1/animals?name={name_or_id.lower()}"
     async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(external_url, headers={"X-Api-Key": api_key})
+        response = await client.get(url, headers={"X-Api-Key": API_NINJA_KEY})
+        data = response.json()
+        if not data:
+            raise HTTPException(status_code=404, detail="Animal no encontrado")
+        
+        # Agregamos lógica para "En Peligro" simulada o basada en taxonomía
+        # La API de Ninjas a veces trae 'conservation_status' en 'characteristics'
+        charac = data[0].get("characteristics", {})
+        status = charac.get("estimated_population_size", "").lower()
+        en_peligro = "threatened" in status or "endangered" in status or "low" in status
 
-            print(f"DEBUG EXTERNO: Ninjas API respondió con {response.status_code}")
-
-            if response.status_code == 404:
-                raise HTTPException(
-                    status_code=404,
-                    detail="animal no encontrado"
-                )
-
-            data = response.json()
-
-            animal_data = {
-                "nombre": data[0]["name"],
-                "reino": data[0]["taxonomy"]["kingdom"],
-                "clase": data[0]["taxonomy"]["class"],
-                "familia": data[0]["taxonomy"]["family"]
-            }
-
-            return animal_data
-
-        except httpx.RequestError:
-            raise HTTPException(
-                status_code=503,
-                detail="Servicio externo no disponible"
-                )
+        return {
+            "nombre": data[0]["name"],
+            "reino": data[0]["taxonomy"].get("kingdom", "N/A"),
+            "clase": data[0]["taxonomy"].get("class", "N/A"),
+            "familia": data[0]["taxonomy"].get("family", "N/A"),
+            "en_peligro": en_peligro
+        }
 
 @app.post("/animales")
 async def guardar_animal(animal: dict):
@@ -92,89 +83,55 @@ async def guardar_animal(animal: dict):
                 INSERT INTO animales_guardados (nombre, reino, clase, familia, url_imagen)
                 VALUES ($1, $2, $3, $4, $5)
             """, 
-                animal.get("nombre"), 
-                animal.get("reino"), 
-                animal.get("clase"), 
-                animal.get("familia"),
+                animal.get("nombre"), animal.get("reino"), 
+                animal.get("clase"), animal.get("familia"),
                 animal.get("url_imagen")
             )
-            return {"status": "success", "message": f"{animal.get('nombre')} guardado en la BD."}
-            
+            return {"status": "success"}
         except asyncpg.exceptions.UniqueViolationError:
-            raise HTTPException(status_code=400, detail="Este animal ya está guardado.")
+            raise HTTPException(status_code=400, detail="Ya está en favoritos")
 
 @app.get("/animales")
 async def listar_animales():
     async with app.state.db_pool.acquire() as connection:
         rows = await connection.fetch("SELECT * FROM animales_guardados")
-        
-        animales = [dict(row) for row in rows]
-        return animales
+        return [dict(row) for row in rows]
+
+@app.delete("/animales/{nombre}")
+async def eliminar_animal(nombre: str):
+    async with app.state.db_pool.acquire() as connection:
+        result = await connection.execute(
+            "DELETE FROM animales_guardados WHERE nombre = $1", 
+            nombre
+        )
+        if result == "DELETE 0":
+            raise HTTPException(status_code=404, detail="No se encontró el favorito")
+        return {"status": "success", "message": f"{nombre} eliminado."}
 
 @app.get("/api/animal-imagen/{nombre}")
 async def obtener_imagen_animal(nombre: str):
     access_key = os.getenv("UNSPLASH_ACCESS_KEY", "")
-    base_url = "https://api.unsplash.com"
-    
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"{base_url}/search/photos",
-            headers={
-                "Accept-Version": "v1",
-                "Authorization": f"Client-ID {access_key}"
-            },
-            params={"query": nombre}
+            f"https://api.unsplash.com/search/photos",
+            headers={"Authorization": f"Client-ID {access_key}"},
+            params={"query": nombre, "per_page": 1}
         )
-        
         if response.status_code == 200:
             datos = response.json()
-            if datos["results"]:
-                return {
-                    "url_imagen": datos["results"][0]["urls"]["regular"],
-                    "descripcion": datos["results"][0]["alt_description"] or "Sin descripción"
-                }
-            else:
-                raise HTTPException(status_code=404, detail="No se encontraron imágenes")
-        else:
-            raise HTTPException(
-                status_code=response.status_code, 
-                detail=f"Error al obtener imagen de Unsplash: {response.text}"
-            )
+            url = datos["results"][0]["urls"]["regular"] if datos["results"] else ""
+            return {"url_imagen": url}
+        return {"url_imagen": ""}
 
 @app.get("/info-wikipedia/{nombre_animal}")
 async def obtener_info_wikipedia(nombre_animal: str):
-    url_wikipedia = f"https://es.wikipedia.org/api/rest_v1/page/summary/{nombre_animal}"
-    
+    url = f"https://es.wikipedia.org/api/rest_v1/page/summary/{nombre_animal}"
     async with httpx.AsyncClient() as client:
-        response = await client.get(
-            url_wikipedia,
-            headers={"User-Agent": "WildInfoApp/1.0 (jorg.yael99@gmail.com)"}
-        )
-        
+        response = await client.get(url, headers={"User-Agent": "WildInfoApp/1.0"})
         if response.status_code == 200:
             datos = response.json()
             return {
-                "nombre_oficial": datos.get("title"),
                 "resumen": datos.get("extract"),
                 "enlace_articulo": datos.get("content_urls", {}).get("desktop", {}).get("page")
             }
-        elif response.status_code == 404:
-            raise HTTPException(status_code=404, detail=f"No se encontró: {nombre_animal}")
-        else:
-            raise HTTPException(status_code=502, detail="Error con Wikipedia")
-
-@app.middleware("/http")
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    
-    response = await call_next(request)
-    
-    process_time = (time.time() - start_time) * 1000
-    
-    print(f"DEBUG: {request.method} {request.url.path} - Status: {response.status_code} - {process_time:.2f}ms")
-    
-    return response
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+        return None

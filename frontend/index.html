@@ -3,43 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WildInfo - Buscador de Animales</title>
+    <title>WildInfo - Enciclopedia de Vida Silvestre</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <header>
         <h1>WildInfo</h1>
-        <p>Descubre información e imágenes de animales</p>
+        <p>Explora la biodiversidad de animales y plantas</p>
     </header>
 
     <main>
-        <section class="buscador">
-            <input type="text" id="animalInput" placeholder="Escribe el nombre de un animal...">
+        <section class="buscador-container">
+            <div class="search-wrapper">
+                <input type="text" id="animalInput" placeholder="Busca una especie (ej: Oso)..." autocomplete="off">
+                <div id="suggestions" class="suggestions-box hidden"></div>
+            </div>
             <button id="buscarBtn">Buscar</button>
         </section>
 
         <section id="resultado" class="resultado hidden">
             <div class="animal-info">
-                <h2 id="animalNombre"></h2>
+                <div class="header-resultado">
+                    <h2 id="animalNombre"></h2>
+                    <span id="statusBadge" class="badge hidden"></span>
+                </div>
                 <div class="detalles">
                     <p><strong>Reino:</strong> <span id="animalReino"></span></p>
-                    <p><strong>Clase:</strong> <span id="animalClase"></span></p>
+                    <p><strong>Clase/Tipo:</strong> <span id="animalClase"></span></p>
                     <p><strong>Familia:</strong> <span id="animalFamilia"></span></p>
                 </div>
                 <div id="wikipedia" class="wikipedia hidden">
-                    <h3>Sobre este animal</h3>
+                    <h3>Información General</h3>
                     <p id="resumenWikipedia"></p>
-                    <a id="enlaceWikipedia" href="#" target="_blank">Leer más en Wikipedia</a>
+                    <a id="enlaceWikipedia" href="#" target="_blank">Ver artículo completo</a>
                 </div>
             </div>
             <div class="animal-imagen">
-                <img id="animalImagen" src="" alt="Imagen del animal">
+                <img id="animalImagen" src="" alt="">
             </div>
-            <button id="guardarBtn" class="btn-guardar">Guardar en favoritos</button>
+            <div class="acciones">
+                <button id="guardarBtn" class="btn-guardar">Guardar en favoritos</button>
+            </div>
         </section>
 
         <section class="favoritos">
-            <h2>Animales Guardados</h2>
+            <h2>Mi Colección de Favoritos</h2>
             <div id="listaFavoritos" class="lista-favoritos"></div>
         </section>
     </main>
