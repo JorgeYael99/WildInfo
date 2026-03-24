@@ -19,7 +19,6 @@ const RANGOS = [
     { min: 30, t: "Maestro de la Biodiversidad", i: "🌍" }
 ];
 
-// ATMÓSFERA INMERSIVA
 const santuarioObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) document.body.classList.add('modo-santuario');
@@ -50,7 +49,6 @@ async function sincronizar() {
     await fetch(`${API_URL}/perfil/progreso`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(estadoPerfil) });
 }
 
-// BUSCADOR
 const animalInput = document.getElementById('animalInput');
 const suggestionsBox = document.getElementById('suggestions');
 
@@ -141,7 +139,6 @@ async function eliminar(e, n) {
     cargarFavoritos();
 }
 
-// QUIZ
 document.getElementById('btnQuiz').onclick = () => {
     if (favoritosLocales.length < 3) return alert("Faltan animales.");
     document.getElementById('quizModal').classList.remove('hidden');
@@ -159,11 +156,47 @@ function generarPregunta() {
 
 function validar(btn, sel, cor) {
     if (sel === cor) {
-        btn.classList.add('correcto'); rachaActual++;
-        if (rachaActual >= 5) { estadoPerfil.badge_oro = true; document.getElementById('badgeOro').classList.add('unlocked'); sincronizar(); }
-    } else { btn.classList.add('incorrecto'); rachaActual = 0; }
-    document.getElementById('quizRacha').textContent = `Racha: ${rachaActual} 🔥`;
-    setTimeout(generarPregunta, 1500);
+        btn.classList.add('correcto');
+        rachaActual++;
+        
+        if (rachaActual === 10) {
+            finalizarQuizExitoso();
+            return;
+        }
+    } else {
+        btn.classList.add('incorrecto');
+        alert(`¡Oh no! Perdiste la racha. Lograste: ${rachaActual}`);
+        rachaActual = 0;
+        document.getElementById('quizModal').classList.add('hidden');
+    }
+    
+    document.getElementById('quizRacha').textContent = `Racha: ${rachaActual} / 10 🔥`;
+    if (rachaActual < 10 && rachaActual > 0) {
+        setTimeout(generarPregunta, 1200);
+    }
+}
+
+async function finalizarQuizExitoso() {
+    alert("¡Increíble! Has completado el Reto de 10 preguntas.");
+    
+    estadoPerfil.puntos += 20; 
+    
+    if (rachaActual > estadoPerfil.racha_maxima) {
+        estadoPerfil.racha_maxima = rachaActual;
+    }
+    
+    estadoPerfil.badge_oro = true;
+    document.getElementById('badgeOro').classList.add('unlocked');
+
+    const nuevoR = [...RANGOS].reverse().find(r => estadoPerfil.puntos >= r.min);
+    estadoPerfil.rango_titulo = nuevoR.t;
+
+    rachaActual = 0;
+    
+    actualizarUI();
+    await sincronizar();
+    
+    document.getElementById('quizModal').classList.add('hidden');
 }
 
 document.getElementById('buscarBtn').onclick = buscarAnimal;
