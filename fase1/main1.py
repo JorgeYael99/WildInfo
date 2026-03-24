@@ -2,10 +2,9 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import httpx
-import time
-from dotenv import load_dotenv
 import os
 import asyncpg
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -14,23 +13,40 @@ async def lifespan(app: FastAPI):
     db_url = os.getenv("DATABASE_URL")
     try:
         app.state.db_pool = await asyncpg.create_pool(db_url)
-        async with app.state.db_pool.acquire() as connection:
-            await connection.execute("""
+        async with app.state.db_pool.acquire() as conn:
+            # Tabla de Animales
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS animales_guardados (
                     id SERIAL PRIMARY KEY,
                     nombre VARCHAR(100) NOT NULL UNIQUE,
                     reino VARCHAR(50),
                     clase VARCHAR(50),
                     familia VARCHAR(50),
-                    url_imagen TEXT
+                    url_imagen TEXT,
+                    en_peligro BOOLEAN DEFAULT FALSE
                 )
             """)
+            # Asegurar columna en_peligro por si la tabla ya existía
+            await conn.execute("ALTER TABLE animales_guardados ADD COLUMN IF NOT EXISTS en_peligro BOOLEAN DEFAULT FALSE")
+            
+            # Tabla de Perfil
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS perfil_usuario (
+                    id INT PRIMARY KEY,
+                    puntos INT DEFAULT 0,
+                    racha_maxima INT DEFAULT 0,
+                    badge_oro BOOLEAN DEFAULT FALSE,
+                    badge_diversidad BOOLEAN DEFAULT FALSE,
+                    rango_titulo VARCHAR(100) DEFAULT 'Observador de Jardín'
+                )
+            """)
+            await conn.execute("INSERT INTO perfil_usuario (id) VALUES (1) ON CONFLICT DO NOTHING")
     except Exception as e:
-        print(f"ERROR: {e}")
+        print(f"Error BD: {e}")
     yield
     await app.state.db_pool.close()
 
-app = FastAPI(title="WildInfo", lifespan=lifespan)
+app = FastAPI(title="WildInfo Atmosférico", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,98 +56,92 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-API_NINJA_KEY = os.getenv("API_NINJS_KEY", "")
+API_KEY = os.getenv("API_NINJS_KEY", "")
 
 @app.get("/buscar-sugerencias")
-async def buscar_sugerencias(q: str):
+async def sugerencias(q: str):
     url = f"https://api.api-ninjas.com/v1/animals?name={q.lower()}"
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers={"X-Api-Key": API_NINJA_KEY})
-        if response.status_code == 200:
-            data = response.json()
-            return [animal["name"] for animal in data[:5]]
-        return []
+        res = await client.get(url, headers={"X-Api-Key": API_KEY})
+        data = res.json()
+        return [a["name"] for a in data[:5]] if res.status_code == 200 else []
 
-@app.get("/wildinfo/{name_or_id}")
-async def get_animal(name_or_id: str):
-    url = f"https://api.api-ninjas.com/v1/animals?name={name_or_id.lower()}"
+@app.get("/wildinfo/{nombre}")
+async def get_animal(nombre: str):
+    url = f"https://api.api-ninjas.com/v1/animals?name={nombre.lower()}"
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers={"X-Api-Key": API_NINJA_KEY})
-        data = response.json()
-        if not data:
-            raise HTTPException(status_code=404, detail="Animal no encontrado")
-        
-        # Agregamos lógica para "En Peligro" simulada o basada en taxonomía
-        # La API de Ninjas a veces trae 'conservation_status' en 'characteristics'
-        charac = data[0].get("characteristics", {})
-        status = charac.get("estimated_population_size", "").lower()
-        en_peligro = "threatened" in status or "endangered" in status or "low" in status
-
+        res = await client.get(url, headers={"X-Api-Key": API_KEY})
+        data = res.json()
+        if not data: raise HTTPException(status_code=404)
+        char = data[0].get("characteristics", {})
+        status = char.get("estimated_population_size", "").lower()
+        peligro = any(x in status for x in ["threatened", "endangered", "low", "decreasing", "rare"])
         return {
             "nombre": data[0]["name"],
-            "reino": data[0]["taxonomy"].get("kingdom", "N/A"),
-            "clase": data[0]["taxonomy"].get("class", "N/A"),
+            "reino": data[0]["taxonomy"].get("kingdom", "Animalia"),
+            "clase": data[0]["taxonomy"].get("class", "Desconocida"),
             "familia": data[0]["taxonomy"].get("family", "N/A"),
-            "en_peligro": en_peligro
+            "en_peligro": peligro
         }
 
+@app.get("/perfil")
+async def get_perfil():
+    async with app.state.db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM perfil_usuario WHERE id = 1")
+        return dict(row)
+
+@app.put("/perfil/progreso")
+async def update_perfil(d: dict):
+    async with app.state.db_pool.acquire() as conn:
+        await conn.execute("""
+            UPDATE perfil_usuario SET puntos=$1, racha_maxima=$2, 
+            badge_oro=$3, badge_diversidad=$4, rango_titulo=$5 WHERE id=1
+        """, d['puntos'], d['racha_maxima'], d['badge_oro'], d['badge_diversidad'], d['rango_titulo'])
+        return {"status": "ok"}
+
 @app.post("/animales")
-async def guardar_animal(animal: dict):
-    async with app.state.db_pool.acquire() as connection:
+async def save_animal(a: dict):
+    async with app.state.db_pool.acquire() as conn:
         try:
-            await connection.execute("""
-                INSERT INTO animales_guardados (nombre, reino, clase, familia, url_imagen)
-                VALUES ($1, $2, $3, $4, $5)
-            """, 
-                animal.get("nombre"), animal.get("reino"), 
-                animal.get("clase"), animal.get("familia"),
-                animal.get("url_imagen")
-            )
+            await conn.execute("""
+                INSERT INTO animales_guardados (nombre, reino, clase, familia, url_imagen, en_peligro)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            """, a.get('nombre'), a.get('reino'), a.get('clase'), a.get('familia'), a.get('url_imagen'), a.get('en_peligro', False))
             return {"status": "success"}
-        except asyncpg.exceptions.UniqueViolationError:
-            raise HTTPException(status_code=400, detail="Ya está en favoritos")
+        except: raise HTTPException(status_code=400, detail="Ya existe")
 
 @app.get("/animales")
-async def listar_animales():
-    async with app.state.db_pool.acquire() as connection:
-        rows = await connection.fetch("SELECT * FROM animales_guardados")
-        return [dict(row) for row in rows]
+async def list_animales():
+    async with app.state.db_pool.acquire() as conn:
+        rows = await conn.fetch("SELECT * FROM animales_guardados")
+        return [dict(r) for r in rows]
 
 @app.delete("/animales/{nombre}")
-async def eliminar_animal(nombre: str):
-    async with app.state.db_pool.acquire() as connection:
-        result = await connection.execute(
-            "DELETE FROM animales_guardados WHERE nombre = $1", 
-            nombre
-        )
-        if result == "DELETE 0":
-            raise HTTPException(status_code=404, detail="No se encontró el favorito")
-        return {"status": "success", "message": f"{nombre} eliminado."}
+async def delete_animal(nombre: str):
+    async with app.state.db_pool.acquire() as conn:
+        await conn.execute("DELETE FROM animales_guardados WHERE nombre = $1", nombre)
+        return {"status": "deleted"}
 
-@app.get("/api/animal-imagen/{nombre}")
-async def obtener_imagen_animal(nombre: str):
-    access_key = os.getenv("UNSPLASH_ACCESS_KEY", "")
+@app.get("/api/animal-imagen/{n}")
+async def get_img(n: str):
+    key = os.getenv("UNSPLASH_ACCESS_KEY", "")
     async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://api.unsplash.com/search/photos",
-            headers={"Authorization": f"Client-ID {access_key}"},
-            params={"query": nombre, "per_page": 1}
-        )
-        if response.status_code == 200:
-            datos = response.json()
-            url = datos["results"][0]["urls"]["regular"] if datos["results"] else ""
-            return {"url_imagen": url}
-        return {"url_imagen": ""}
+        res = await client.get(f"https://api.unsplash.com/search/photos?query={n}&per_page=1", 
+                               headers={"Authorization": f"Client-ID {key}"})
+        data = res.json()
+        url = data["results"][0]["urls"]["regular"] if data["results"] else ""
+        return {"url_imagen": url}
 
-@app.get("/info-wikipedia/{nombre_animal}")
-async def obtener_info_wikipedia(nombre_animal: str):
-    url = f"https://es.wikipedia.org/api/rest_v1/page/summary/{nombre_animal}"
+@app.get("/info-wikipedia/{n}")
+async def get_wiki(n: str):
+    url = f"https://es.wikipedia.org/api/rest_v1/page/summary/{n}"
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers={"User-Agent": "WildInfoApp/1.0"})
-        if response.status_code == 200:
-            datos = response.json()
-            return {
-                "resumen": datos.get("extract"),
-                "enlace_articulo": datos.get("content_urls", {}).get("desktop", {}).get("page")
-            }
+        res = await client.get(url, headers={"User-Agent": "WildInfo/1.0"})
+        if res.status_code == 200:
+            d = res.json()
+            return {"resumen": d.get("extract"), "enlace_articulo": d.get("content_urls",{}).get("desktop",{}).get("page")}
         return None
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
