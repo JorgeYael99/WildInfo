@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException
 import httpx
+import os
+from dotenv import load_dotenv
 
-# Inicializamos la aplicación FastAPI
+load_dotenv()
+
 app = FastAPI(title="WildInfo API", description="API para obtener datos e imágenes de animales")
 
-# Configuración de Unsplash
-# Pega aquí tu Clave de Acceso (Access Key) que empieza con 51FeTP...
-ACCESS_KEY = "51FeTP2HTk4BZt5zse9gdOkDovfyrY2BG9qxBbiBRR8" 
+ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY", "")
 BASE_URL = "https://api.unsplash.com"
 
 @app.get("/")

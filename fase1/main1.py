@@ -50,7 +50,7 @@ app = FastAPI(title="WildInfo Atmosférico", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("ORIGEN_PERMITIDO")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -144,4 +144,8 @@ async def get_wiki(n: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app, 
+        host=os.getenv("HOST"), 
+        port=int(os.getenv("PORT"))
+    )
