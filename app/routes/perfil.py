@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException, Header, Depends
+from app.core.config import settings
 
 router = APIRouter(prefix="/perfil", tags=["Perfil"])
+
+def verificar_firma(x_api_key: str = Header(None)):
+    if x_api_key != settings.api_secret_key:
+        raise HTTPException(status_code=401, detail="Firma digital no válida o ausente")
 
 @router.get("/")
 async def get_perfil(request: Request):
@@ -9,7 +14,7 @@ async def get_perfil(request: Request):
         row = await conn.fetchrow("SELECT * FROM perfil_usuario WHERE id = 1")
         return dict(row)
 
-@router.put("/progreso")
+@router.put("/progreso", dependencies=[Depends(verificar_firma)])
 async def update_perfil(request: Request, d: dict):
     pool = request.app.state.db_pool
     async with pool.acquire() as conn:

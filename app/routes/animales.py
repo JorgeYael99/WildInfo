@@ -1,14 +1,18 @@
-from fastapi import APIRouter, HTTPException, Request
-from app.services.external_apis import fetch_animal_data, fetch_unsplash_image
-import httpx
+from fastapi import APIRouter, HTTPException, Request, Header, Depends
+from app.services.api_ninjas import fetch_animal_data, fetch_sugerencias
+from app.services.unsplash import fetch_unsplash_image
+from app.services.wikipedia import fetch_wikipedia_resumen
+from app.core.config import settings
 
 router = APIRouter(prefix="/animales", tags=["Animales"])
 
+def verificar_firma(x_api_key: str = Header(None)):
+    if x_api_key != settings.api_secret_key:
+        raise HTTPException(status_code=401, detail="Firma digital no válida o ausente")
+
 @router.get("/buscar-sugerencias")
 async def sugerencias(q: str):
-    data = await fetch_animal_data(q)
-    # Si la API de Ninjas devuelve una lista, tomamos los nombres
-    return [data["name"]] if data else []
+    return await fetch_sugerencias(q)
 
 @router.get("/info/{nombre}")
 async def get_animal(nombre: str):
@@ -28,7 +32,7 @@ async def get_animal(nombre: str):
         "en_peligro": peligro
     }
 
-@router.post("/")
+@router.post("/", dependencies=[Depends(verificar_firma)])
 async def save_animal(request: Request, animal: dict):
     pool = request.app.state.db_pool
     async with pool.acquire() as conn:
@@ -49,7 +53,18 @@ async def list_animales(request: Request):
         rows = await conn.fetch("SELECT * FROM animales_guardados")
         return [dict(r) for r in rows]
 
+@router.delete("/{nombre}", dependencies=[Depends(verificar_firma)])
+async def delete_animal(request: Request, nombre: str):
+    pool = request.app.state.db_pool
+    async with pool.acquire() as conn:
+        await conn.execute("DELETE FROM animales_guardados WHERE nombre = $1", nombre)
+        return {"status": "deleted"}
+
 @router.get("/imagen/{nombre}")
 async def get_animal_image(nombre: str):
     url = await fetch_unsplash_image(nombre)
     return {"url_imagen": url}
+
+@router.get("/wikipedia/{nombre}")
+async def get_wikipedia(nombre: str):
+    return await fetch_wikipedia_resumen(nombre)
