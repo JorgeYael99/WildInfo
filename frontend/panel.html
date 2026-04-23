@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WildInfo - Explorador Pro</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>WildInfo</h1>
+        <p>Tu Enciclopedia Interactiva de Biodiversidad</p>
+        <button id="logoutBtn" style="position: absolute; top: 20px; right: 20px; background: none; border: 1px solid #4ade80; color: #4ade80; cursor: pointer; border-radius: 5px; padding: 5px 10px;">Cerrar Sesión</button>
+    </header>
+
+    <main>
+        <section id="panelExplorador" class="panel-explorador">
+            <div class="rango-badge"><span id="iconoRango">🌱</span></div>
+            <div class="rango-info">
+                <h3 id="tituloRango">Cargando...</h3>
+                <p id="statsExplorador">Especies: 0 | Clases: 0</p>
+                <div class="barra-progreso"><div id="progresoRango" class="progreso-fill"></div></div>
+            </div>
+            <div class="logros-container">
+                <div id="badgeOro" class="badge-logro" title="Racha de 10 aciertos">🥇</div>
+                <div id="badgeDiversidad" class="badge-logro" title="5 Clases diferentes">🌿</div>
+            </div>
+            <button id="btnQuiz" class="btn-quiz">Reto Quiz 🧠</button>
+        </section>
+
+        <section class="buscador-container">
+            <div class="search-wrapper">
+                <input type="text" id="animalInput" placeholder="Busca oso, águila, ballena..." autocomplete="off">
+                <div id="suggestions" class="suggestions-box hidden"></div>
+            </div>
+            <button id="buscarBtn">Explorar</button>
+        </section>
+
+        <section id="resultado" class="resultado hidden">
+            <div class="animal-info">
+                <div class="header-resultado">
+                    <h2 id="animalNombre"></h2>
+                    <span id="statusBadge" class="badge hidden"></span>
+                </div>
+                <div class="detalles">
+                    <p><strong>Reino:</strong> <span id="animalReino"></span></p>
+                    <p><strong>Clase:</strong> <span id="animalClase"></span></p>
+                    <p><strong>Familia:</strong> <span id="animalFamilia"></span></p>
+                    <p><strong>Hábitat:</strong> <span id="animalHabitat"></span></p>
+                    <p><strong>Dieta:</strong> <span id="animalDieta"></span></p>
+                    <p><strong>Longevidad:</strong> <span id="animalLongevidad"></span></p>
+                    <p><strong>Peso:</strong> <span id="animalPeso"></span></p>
+                    <p><strong>Velocidad:</strong> <span id="animalVelocidad"></span></p>
+                </div>
+                <div id="wikipedia" class="wikipedia">
+                    <p id="resumenWikipedia"></p>
+                    <a id="enlaceWikipedia" href="#" target="_blank" class="wiki-link">Leer más en Wikipedia</a>
+                </div>
+                <button id="guardarBtn" class="btn-guardar">Añadir a mi Enciclopedia</button>
+            </div>
+            <div class="animal-imagen">
+                <img id="animalImagen" src="" alt="Imagen del animal">
+            </div>
+        </section>
+
+        <section class="biblioteca-educativa">
+            <div id="contenedorCarpetas"></div>
+        </section>
+
+        <section id="santuarioRiesgo" class="santuario-riesgo hidden">
+            <div class="santuario-header">
+                <h2>🔴 Santuario de Especies en Peligro</h2>
+                <p>Estas especies están luchando por su supervivencia. Aprender sobre ellas es el primer paso para protegerlas.</p>
+            </div>
+            <div id="listaPeligro" class="grid-especie"></div>
+        </section>
+
+    </main>
+
+    <div id="quizModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <span id="quizRacha">Racha: 0 🔥</span>
+            <h2 id="preguntaTexto"></h2>
+            <img id="quizImagen" src="" alt="Imagen para el quiz">
+            <div id="opcionesContainer" class="grid-opciones"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Verificar autenticación al cargar
+        const sesionGuardada = localStorage.getItem('usuario_wildinfo');
+        if (!sesionGuardada) {
+            window.location.href = 'login.html';
+        }
+        
+        // Cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
+            } catch (e) { console.error(e); }
+            localStorage.removeItem('usuario_wildinfo');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
