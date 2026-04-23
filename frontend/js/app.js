@@ -1,8 +1,28 @@
+/* --- CONFIGURACIÓN INICIAL --- */
 const API_URL = 'http://localhost:8000';
+
+function getAuthHeaders() {
+    const userData = JSON.parse(localStorage.getItem('usuario_wildinfo') || '{}');
+    if (!userData.token || !userData.user_id) return {};
+    return {
+        'Authorization': `Bearer ${userData.token}`,
+        'X-User-Id': userData.user_id,
+        'X-Username': userData.username || ''
+    };
+}
+
 let animalActual = null;
 let favoritosLocales = [];
 let rachaActual = 0;
-let estadoPerfil = { puntos: 0, racha_maxima: 0, badge_oro: false, badge_diversidad: false, rango_titulo: "Observador" };
+
+// Estado inicial del perfil
+let estadoPerfil = { 
+    puntos: 0, 
+    racha_maxima: 0, 
+    badge_oro: false, 
+    badge_diversidad: false, 
+    rango_titulo: "Observador" 
+};
 
 const ENCICLOPEDIA_INFO = {
     "Mammalia": "Mamíferos: Sangre caliente, pelo y alimentan crías con leche.",
@@ -19,6 +39,166 @@ const RANGOS = [
     { min: 30, t: "Maestro de la Biodiversidad", i: "🌍" }
 ];
 
+/* --- LÓGICA DE PERFIL Y PROGRESO --- */
+async function cargarPerfil() {
+    const headers = getAuthHeaders();
+    if (!headers['Authorization']) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/perfil/`, { headers });
+        if (res.ok) {
+            estadoPerfil = await res.json();
+            if (estadoPerfil.badge_oro) document.getElementById('badgeOro').classList.add('unlocked');
+            if (estadoPerfil.badge_diversidad) document.getElementById('badgeDiversidad').classList.add('unlocked');
+            actualizarUI();
+        } else if (res.status === 401) {
+            localStorage.removeItem('usuario_wildinfo');
+            window.location.href = 'login.html';
+        }
+    } catch (e) { 
+        console.error("Error al cargar perfil:", e);
+    }
+}
+
+function actualizarUI() {
+    document.getElementById('tituloRango').textContent = estadoPerfil.rango_titulo;
+    const r = RANGOS.find(x => x.t === estadoPerfil.rango_titulo) || RANGOS[0];
+    document.getElementById('iconoRango').textContent = r.i;
+    
+    const indexActual = RANGOS.indexOf(r);
+    const prox = RANGOS[indexActual + 1] || { min: 50 };
+    
+    const porcentaje = Math.min((estadoPerfil.puntos / prox.min) * 100, 100);
+    document.getElementById('progresoRango').style.width = `${porcentaje}%`;
+    
+    const numClases = new Set(favoritosLocales.map(a => a.clase)).size;
+    document.getElementById('statsExplorador').textContent = `Especies: ${favoritosLocales.length} | Clases: ${numClases}`;
+}
+
+async function sincronizar() {
+    const headers = getAuthHeaders();
+    if (!headers['Authorization']) return;
+    
+    try {
+        await fetch(`${API_URL}/perfil/progreso`, { 
+            method: 'PUT', 
+            headers: { ...headers, 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(estadoPerfil) 
+        });
+    } catch (e) { 
+        console.error("Error al sincronizar:", e);
+    }
+}
+
+/* --- BUSCADOR Y RESULTADOS --- */
+const animalInput = document.getElementById('animalInput');
+const suggestionsBox = document.getElementById('suggestions');
+
+animalInput.addEventListener('input', async (e) => {
+    const q = e.target.value.trim();
+    if (q.length < 2) return suggestionsBox.classList.add('hidden');
+    
+    try {
+        const res = await fetch(`${API_URL}/animales/buscar-sugerencias?q=${q}`);
+        const data = await res.json();
+        suggestionsBox.innerHTML = data.map(n => `<div class="suggestion-item" onclick="seleccionar('${n}')">${n}</div>`).join('');
+        suggestionsBox.classList.remove('hidden');
+    } catch (e) { console.error(e); }
+});
+
+window.seleccionar = n => { 
+    animalInput.value = n; 
+    suggestionsBox.classList.add('hidden'); 
+    buscarAnimal(); 
+};
+
+async function buscarAnimal() {
+    const n = animalInput.value.trim();
+    if (!n) return;
+
+    try {
+        const [infoR, imgR, wikiR] = await Promise.all([
+            fetch(`${API_URL}/animales/info/${n}`),
+            fetch(`${API_URL}/animales/imagen/${n}`),
+            fetch(`${API_URL}/animales/wikipedia/${n}`)
+        ]);
+
+        const info = await infoR.json();
+        const img = await imgR.json();
+        const wiki = wikiR.ok ? await wikiR.json() : null;
+
+        animalActual = { 
+            ...info, 
+            url_imagen: img.url_imagen || '', 
+            resumen: wiki?.resumen || 'Sin resumen disponible.', 
+            enlace: wiki?.enlace_articulo || '#' 
+        };
+        mostrarResultado(animalActual);
+    } catch (e) { 
+        console.error("Error al buscar animal:", e);
+        alert("Ocurrió un error al buscar la información.");
+    }
+}
+
+function mostrarResultado(a) {
+    document.getElementById('animalNombre').textContent = a.nombre;
+    document.getElementById('animalClase').textContent = a.clase;
+    document.getElementById('animalFamilia').textContent = a.familia || 'N/A';
+    document.getElementById('animalReino').textContent = a.reino || 'Animalia';
+    document.getElementById('animalHabitat').textContent = a.habitat || 'No disponible';
+    document.getElementById('animalDieta').textContent = a.dieta || 'No disponible';
+    document.getElementById('animalLongevidad').textContent = a.寿命 || 'No disponible';
+    document.getElementById('animalPeso').textContent = a.peso || 'No disponible';
+    document.getElementById('animalVelocidad').textContent = a.velocidad || 'No disponible';
+    document.getElementById('animalImagen').src = a.url_imagen;
+    document.getElementById('resumenWikipedia').textContent = a.resumen || 'Sin información disponible.';
+    if (a.enlace && a.enlace !== '#') {
+        document.getElementById('enlaceWikipedia').href = a.enlace;
+        document.getElementById('enlaceWikipedia').style.display = 'inline-block';
+    } else {
+        document.getElementById('enlaceWikipedia').style.display = 'none';
+    }
+    
+    // Mostrar badge de peligro
+    const statusBadge = document.getElementById('statusBadge');
+    if (a.en_peligro) {
+        statusBadge.textContent = '⚠️ EN PELIGRO';
+        statusBadge.classList.remove('hidden');
+    } else {
+        statusBadge.classList.add('hidden');
+    }
+    
+    document.getElementById('resultado').classList.remove('hidden');
+}
+
+async function guardar() {
+    if (!animalActual) return;
+    const headers = getAuthHeaders();
+    if (!headers['Authorization']) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/animales/`, { 
+            method: 'POST', 
+            headers: { ...headers, 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(animalActual) 
+        });
+        if (res.ok) {
+            cargarFavoritos();
+            document.getElementById('resultado').classList.add('hidden');
+            animalInput.value = '';
+        } else {
+            const data = await res.json();
+            alert(data.detail || "Este animal ya está en tu colección.");
+        }
+    } catch (e) { 
+        console.error(e); 
+    }
+}
+
+/* --- BIBLIOTECA Y SANTUARIO --- */
 const santuarioObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) document.body.classList.add('modo-santuario');
@@ -26,159 +206,147 @@ const santuarioObserver = new IntersectionObserver((entries) => {
     });
 }, { threshold: 0.3 });
 
-async function cargarPerfil() {
-    try {
-        const res = await fetch(`${API_URL}/perfil`);
-        estadoPerfil = await res.json();
-        if (estadoPerfil.badge_oro) document.getElementById('badgeOro').classList.add('unlocked');
-        if (estadoPerfil.badge_diversidad) document.getElementById('badgeDiversidad').classList.add('unlocked');
-        actualizarUI();
-    } catch (e) { console.error(e); }
-}
-
-function actualizarUI() {
-    document.getElementById('tituloRango').textContent = estadoPerfil.rango_titulo;
-    const r = RANGOS.find(x => x.t === estadoPerfil.rango_titulo) || RANGOS[0];
-    document.getElementById('iconoRango').textContent = r.i;
-    const prox = RANGOS[RANGOS.indexOf(r) + 1] || { min: 50 };
-    document.getElementById('progresoRango').style.width = `${(estadoPerfil.puntos / prox.min) * 100}%`;
-    document.getElementById('statsExplorador').textContent = `Especies: ${favoritosLocales.length} | Clases: ${new Set(favoritosLocales.map(a=>a.clase)).size}`;
-}
-
-async function sincronizar() {
-    await fetch(`${API_URL}/perfil/progreso`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(estadoPerfil) });
-}
-
-const animalInput = document.getElementById('animalInput');
-const suggestionsBox = document.getElementById('suggestions');
-
-animalInput.addEventListener('input', async (e) => {
-    const q = e.target.value.trim();
-    if (q.length < 2) return suggestionsBox.classList.add('hidden');
-    const res = await fetch(`${API_URL}/buscar-sugerencias?q=${q}`);
-    const data = await res.json();
-    suggestionsBox.innerHTML = data.map(n => `<div class="suggestion-item" onclick="seleccionar('${n}')">${n}</div>`).join('');
-    suggestionsBox.classList.remove('hidden');
-});
-
-window.seleccionar = n => { animalInput.value = n; suggestionsBox.classList.add('hidden'); buscarAnimal(); };
-
-async function buscarAnimal() {
-    const n = animalInput.value.trim();
-    if (!n) return;
-    const [infoR, imgR] = await Promise.all([fetch(`${API_URL}/wildinfo/${n}`), fetch(`${API_URL}/api/animal-imagen/${n}`)]);
-    const info = await infoR.json();
-    const img = await imgR.json();
-    const wikiR = await fetch(`${API_URL}/info-wikipedia/${n}`);
-    const wiki = wikiR.ok ? await wikiR.json() : null;
-
-    animalActual = { ...info, url_imagen: img.url_imagen, resumen: wiki?.resumen, enlace: wiki?.enlace_articulo };
-    mostrarResultado(animalActual);
-}
-
-function mostrarResultado(a) {
-    document.getElementById('animalNombre').textContent = a.nombre;
-    document.getElementById('animalClase').textContent = a.clase;
-    document.getElementById('animalImagen').src = a.url_imagen;
-    document.getElementById('resultado').classList.remove('hidden');
-}
-
-async function guardar() {
-    if (!animalActual) return;
-    const res = await fetch(`${API_URL}/animales`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(animalActual) });
-    if (res.ok) cargarFavoritos();
-}
-
 async function cargarFavoritos() {
-    const res = await fetch(`${API_URL}/animales`);
-    favoritosLocales = await res.json();
+    const headers = getAuthHeaders();
+    if (!headers['Authorization']) {
+        window.location.href = 'login.html';
+        return;
+    }
     
-    const sRiesgo = document.getElementById('santuarioRiesgo');
-    const listaPeligro = document.getElementById('listaPeligro');
-    const contenedorNormal = document.getElementById('contenedorCarpetas');
+    try {
+        const res = await fetch(`${API_URL}/animales/`, { headers });
+        if (res.status === 401) {
+            localStorage.removeItem('usuario_wildinfo');
+            window.location.href = 'login.html';
+            return;
+        }
+        favoritosLocales = await res.json();
+        
+        const sRiesgo = document.getElementById('santuarioRiesgo');
+        const listaPeligro = document.getElementById('listaPeligro');
+        const contenedorNormal = document.getElementById('contenedorCarpetas');
 
-    const enPeligro = favoritosLocales.filter(a => a.en_peligro);
-    const seguros = favoritosLocales.filter(a => !a.en_peligro);
+        const enPeligro = favoritosLocales.filter(a => a.en_peligro);
+        const seguros = favoritosLocales.filter(a => !a.en_peligro);
 
-    if (enPeligro.length > 0) {
-        sRiesgo.classList.remove('hidden');
-        listaPeligro.innerHTML = enPeligro.map(a => generarHTML(a, true)).join('');
-        santuarioObserver.observe(sRiesgo);
-    } else { sRiesgo.classList.add('hidden'); }
+        // Manejo del Santuario
+        if (enPeligro.length > 0) {
+            sRiesgo.classList.remove('hidden');
+            listaPeligro.innerHTML = enPeligro.map(a => generarHTML(a, true)).join('');
+            santuarioObserver.observe(sRiesgo);
+        } else { 
+            sRiesgo.classList.add('hidden'); 
+            document.body.classList.remove('modo-santuario');
+        }
 
-    const grupos = seguros.reduce((acc, a) => { (acc[a.clase] = acc[a.clase] || []).push(a); return acc; }, {});
-    contenedorNormal.innerHTML = Object.keys(grupos).map(c => `
-        <div class="grupo-especie">
-            <h3>📂 ${c} (${grupos[c].length})</h3>
-            <div class="descripcion-clase">${ENCICLOPEDIA_INFO[c] || "Información taxonómica."}</div>
-            <div class="grid-especie">${grupos[c].map(a => generarHTML(a, false)).join('')}</div>
-        </div>
-    `).join('');
+        // Manejo de Carpetas por Clase
+        const grupos = seguros.reduce((acc, a) => { 
+            (acc[a.clase] = acc[a.clase] || []).push(a); 
+            return acc; 
+        }, {});
 
-    const clasesUnicas = new Set(favoritosLocales.map(a => a.clase)).size;
-    estadoPerfil.puntos = favoritosLocales.length + (clasesUnicas * 3);
-    if (clasesUnicas >= 5) { estadoPerfil.badge_diversidad = true; document.getElementById('badgeDiversidad').classList.add('unlocked'); }
-    
-    const nuevoR = [...RANGOS].reverse().find(r => estadoPerfil.puntos >= r.min);
-    estadoPerfil.rango_titulo = nuevoR.t;
-    actualizarUI();
-    sincronizar();
+        contenedorNormal.innerHTML = Object.keys(grupos).map(c => `
+            <div class="grupo-especie">
+                <h3>📂 ${c} (${grupos[c].length})</h3>
+                <div class="descripcion-clase">${ENCICLOPEDIA_INFO[c] || "Información taxonómica."}</div>
+                <div class="grid-especie">${grupos[c].map(a => generarHTML(a, false)).join('')}</div>
+            </div>
+        `).join('');
+
+        // Actualizar Puntos y Logros
+        const clasesUnicas = new Set(favoritosLocales.map(a => a.clase)).size;
+        estadoPerfil.puntos = favoritosLocales.length + (clasesUnicas * 3);
+        
+        if (clasesUnicas >= 5) { 
+            estadoPerfil.badge_diversidad = true; 
+            document.getElementById('badgeDiversidad').classList.add('unlocked'); 
+        }
+        
+        const nuevoR = [...RANGOS].reverse().find(r => estadoPerfil.puntos >= r.min);
+        estadoPerfil.rango_titulo = nuevoR.t;
+        
+        actualizarUI();
+        sincronizar();
+    } catch (e) { console.error("Error al cargar favoritos:", e); }
 }
 
 function generarHTML(a, esPeligro) {
-    return `<div class="tarjeta-animal ${esPeligro ? 'tarjeta-peligro' : ''}" onclick="seleccionar('${a.nombre}')">
-        <div class="tarjeta-imagen-container"><img src="${a.url_imagen}"></div>
-        <div class="info-compacta"><h4>${a.nombre}</h4><p>${esPeligro ? '⚠️ RIESGO CRÍTICO' : a.familia}</p></div>
+    return `
+    <div class="tarjeta-animal ${esPeligro ? 'tarjeta-peligro' : ''}" onclick="seleccionar('${a.nombre}')">
+        <div class="tarjeta-imagen-container"><img src="${a.url_imagen}" alt="${a.nombre}"></div>
+        <div class="info-compacta">
+            <h4>${a.nombre}</h4>
+            <p>${esPeligro ? '⚠️ RIESGO CRÍTICO' : (a.familia || 'Especie')}</p>
+        </div>
         <button class="btn-eliminar" onclick="eliminar(event, '${a.nombre}')">×</button>
     </div>`;
 }
 
 async function eliminar(e, n) {
     e.stopPropagation();
-    await fetch(`${API_URL}/animales/${n}`, { method: 'DELETE' });
-    cargarFavoritos();
+    if (!confirm(`¿Eliminar a ${n} de tu colección?`)) return;
+    const headers = getAuthHeaders();
+    if (!headers['Authorization']) return;
+    
+    try {
+        await fetch(`${API_URL}/animales/${encodeURIComponent(n)}`, { method: 'DELETE', headers });
+        cargarFavoritos();
+    } catch (e) { 
+        console.error(e);
+    }
 }
 
+/* --- SISTEMA DE QUIZ --- */
 document.getElementById('btnQuiz').onclick = () => {
-    if (favoritosLocales.length < 3) return alert("Faltan animales.");
+    if (favoritosLocales.length < 3) {
+        return alert("Necesitas al menos 3 animales en tu enciclopedia para jugar.");
+    }
     document.getElementById('quizModal').classList.remove('hidden');
+    rachaActual = 0;
+    document.getElementById('quizRacha').textContent = `Racha: 0 / 10 🔥`;
     generarPregunta();
 };
 
 function generarPregunta() {
     const a = favoritosLocales[Math.floor(Math.random() * favoritosLocales.length)];
-    const clases = [...new Set(favoritosLocales.map(x => x.clase))];
-    let opc = [a.clase, ...clases.filter(c => c !== a.clase).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random());
-    document.getElementById('preguntaTexto').textContent = `¿Clase de: ${a.nombre}?`;
+    const todasLasClases = [...new Set(favoritosLocales.map(x => x.clase))];
+    
+    let opciones = [a.clase];
+    const otrasClases = todasLasClases.filter(c => c !== a.clase).sort(() => 0.5 - Math.random());
+    opciones.push(...otrasClases.slice(0, 3));
+    
+    opciones.sort(() => 0.5 - Math.random());
+
+    document.getElementById('preguntaTexto').textContent = `¿A qué clase pertenece el/la ${a.nombre}?`;
     document.getElementById('quizImagen').src = a.url_imagen;
-    document.getElementById('opcionesContainer').innerHTML = opc.map(o => `<button class="opcion-btn" onclick="validar(this, '${o}', '${a.clase}')">${o}</button>`).join('');
+    document.getElementById('opcionesContainer').innerHTML = opciones.map(o => `
+        <button class="opcion-btn" onclick="validarPregunta(this, '${o}', '${a.clase}')">${o}</button>
+    `).join('');
 }
 
-function validar(btn, sel, cor) {
-    if (sel === cor) {
+window.validarPregunta = (btn, seleccion, correcta) => {
+    if (seleccion === correcta) {
         btn.classList.add('correcto');
         rachaActual++;
+        document.getElementById('quizRacha').textContent = `Racha: ${rachaActual} / 10 🔥`;
         
         if (rachaActual === 10) {
-            finalizarQuizExitoso();
-            return;
+            setTimeout(finalizarQuizExitoso, 600);
+        } else {
+            setTimeout(generarPregunta, 1000);
         }
     } else {
         btn.classList.add('incorrecto');
-        alert(`¡Oh no! Perdiste la racha. Lograste: ${rachaActual}`);
-        rachaActual = 0;
-        document.getElementById('quizModal').classList.add('hidden');
+        setTimeout(() => {
+            alert(`¡Respuesta incorrecta! Tu racha fue de ${rachaActual}. Inténtalo de nuevo.`);
+            rachaActual = 0;
+            document.getElementById('quizModal').classList.add('hidden');
+        }, 400);
     }
-    
-    document.getElementById('quizRacha').textContent = `Racha: ${rachaActual} / 10 🔥`;
-    if (rachaActual < 10 && rachaActual > 0) {
-        setTimeout(generarPregunta, 1200);
-    }
-}
+};
 
 async function finalizarQuizExitoso() {
     alert("¡Increíble! Has completado el Reto de 10 preguntas.");
-    
     estadoPerfil.puntos += 20; 
     
     if (rachaActual > estadoPerfil.racha_maxima) {
@@ -191,17 +359,18 @@ async function finalizarQuizExitoso() {
     const nuevoR = [...RANGOS].reverse().find(r => estadoPerfil.puntos >= r.min);
     estadoPerfil.rango_titulo = nuevoR.t;
 
-    rachaActual = 0;
-    
     actualizarUI();
     await sincronizar();
-    
     document.getElementById('quizModal').classList.add('hidden');
 }
 
+/* --- INICIALIZACIÓN --- */
 document.getElementById('buscarBtn').onclick = buscarAnimal;
 document.getElementById('guardarBtn').onclick = guardar;
-document.querySelector('.close-modal').onclick = () => document.getElementById('quizModal').classList.add('hidden');
+document.querySelector('.close-modal').onclick = () => {
+    document.getElementById('quizModal').classList.add('hidden');
+};
 
+// Cargar datos iniciales
 cargarPerfil();
 cargarFavoritos();
