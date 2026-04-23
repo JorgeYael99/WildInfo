@@ -3,248 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WildInfo - Explorador de Biodiversidad</title>
+    <title>WildInfo - Explorador Pro</title>
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .landing-page {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .hero-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(74, 222, 128, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        
-        .logo-grande {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .hero-title {
-            font-size: 3.5rem;
-            color: #4ade80;
-            margin-bottom: 0.5rem;
-            letter-spacing: -2px;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.5rem;
-            color: #94a3b8;
-            margin-bottom: 2rem;
-            max-width: 600px;
-        }
-        
-        .tagline {
-            font-size: 1.1rem;
-            color: #64748b;
-            margin-bottom: 3rem;
-            font-style: italic;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            max-width: 900px;
-            margin: 3rem 0;
-            width: 100%;
-        }
-        
-        .feature-card {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(74, 222, 128, 0.2);
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            transition: 0.3s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: #4ade80;
-            box-shadow: 0 10px 40px rgba(74, 222, 128, 0.1);
-        }
-        
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .feature-card h3 {
-            color: #4ade80;
-            margin-bottom: 0.5rem;
-        }
-        
-        .feature-card p {
-            color: #94a3b8;
-            font-size: 0.95rem;
-        }
-        
-        .cta-buttons {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .btn-cta {
-            padding: 1rem 2.5rem;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-decoration: none;
-            transition: 0.3s;
-            cursor: pointer;
-            border: none;
-        }
-        
-        .btn-primary {
-            background: #4ade80;
-            color: #0f172a;
-        }
-        
-        .btn-primary:hover {
-            background: #22c55e;
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(74, 222, 128, 0.3);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: #4ade80;
-            border: 2px solid #4ade80;
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(74, 222, 128, 0.1);
-            transform: scale(1.05);
-        }
-        
-        .stats-bar {
-            display: flex;
-            gap: 3rem;
-            margin-top: 3rem;
-            padding: 1.5rem 3rem;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #fbbf24;
-        }
-        
-        .stat-label {
-            font-size: 0.85rem;
-            color: #64748b;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #475569;
-            font-size: 0.9rem;
-        }
-        
-        @media (max-width: 768px) {
-            .hero-title { font-size: 2.5rem; }
-            .stats-bar { flex-direction: column; gap: 1rem; padding: 1.5rem; }
-        }
-    </style>
 </head>
 <body>
-    <div class="landing-page">
-        <section class="hero-section">
-            <div class="logo-grande">🌍</div>
-            <h1 class="hero-title">WildInfo</h1>
-            <p class="hero-subtitle">Tu guía interactiva para descubrir y aprender sobre el incredible mundo animal</p>
-            <p class="tagline">"Explora la biodiversidad, conoce las especies y protege nuestra naturaleza"</p>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🔍</div>
-                    <h3>Explora la Fauna</h3>
-                    <p>Busca cualquier animal y descubre su taxonomía, habitat, estado de conservación y más</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📚</div>
-                    <h3>Aprende y Educa</h3>
-                    <p>Accede a información científica clara y visual. Ideal para estudiantes y curious</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3>Colecciona y Gana</h3>
-                    <p>Guarda tus animales favoritos, completa clases taxonómicas y desbloquea logros</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">⚠️</div>
-                    <h3>Conciencia Verde</h3>
-                    <p>Descubre especies en peligro de extinción y aprende cómo protegerlas</p>
-                </div>
+    <header>
+        <h1>WildInfo</h1>
+        <p>Tu Enciclopedia Interactiva de Biodiversidad</p>
+    </header>
+
+    <main>
+        <section id="panelExplorador" class="panel-explorador">
+            <div class="rango-badge"><span id="iconoRango">🌱</span></div>
+            <div class="rango-info">
+                <h3 id="tituloRango">Cargando...</h3>
+                <p id="statsExplorador">Especies: 0 | Clases: 0</p>
+                <div class="barra-progreso"><div id="progresoRango" class="progreso-fill"></div></div>
             </div>
-            
-            <div class="cta-buttons">
-                <a href="login.html" class="btn-cta btn-primary">Iniciar Sesión</a>
-                <a href="registro.html" class="btn-cta btn-secondary">Crear Cuenta</a>
+            <div class="logros-container">
+                <div id="badgeOro" class="badge-logro" title="Racha de 5 aciertos">🥇</div>
+                <div id="badgeDiversidad" class="badge-logro" title="5 Clases diferentes">🌿</div>
             </div>
-            
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <div class="stat-number">1.5M+</div>
-                    <div class="stat-label">Especies conhecidas</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">40%</div>
-                    <div class="stat-label">En peligro de extinción</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">∞</div>
-                    <div class="stat-label">Curiosidades por descubrir</div>
-                </div>
-            </div>
+            <button id="btnQuiz" class="btn-quiz">Reto Quiz 🧠</button>
         </section>
-        
-        <footer>
-            <p>🐾 WildInfo - Explorador de Biodiversidad | Educando para proteger 🐾</p>
-        </footer>
+
+        <section class="buscador-container">
+            <div class="search-wrapper">
+                <input type="text" id="animalInput" placeholder="Busca oso, águila, helecho..." autocomplete="off">
+                <div id="suggestions" class="suggestions-box hidden"></div>
+            </div>
+            <button id="buscarBtn">Explorar</button>
+        </section>
+
+        <section id="resultado" class="resultado hidden">
+            <div class="animal-info">
+                <div class="header-resultado">
+                    <h2 id="animalNombre"></h2>
+                    <span id="statusBadge" class="badge hidden"></span>
+                </div>
+                <div class="detalles">
+                    <p><strong>Reino:</strong> <span id="animalReino"></span></p>
+                    <p><strong>Clase:</strong> <span id="animalClase"></span></p>
+                    <p><strong>Familia:</strong> <span id="animalFamilia"></span></p>
+                </div>
+                <div id="wikipedia" class="wikipedia hidden">
+                    <p id="resumenWikipedia"></p>
+                    <a id="enlaceWikipedia" href="#" target="_blank">Leer más</a>
+                </div>
+                <button id="guardarBtn" class="btn-guardar">Añadir a mi Enciclopedia</button>
+            </div>
+            <div class="animal-imagen"><img id="animalImagen" src="" alt=""></div>
+        </section>
+
+        <section class="biblioteca-educativa">
+            <div id="contenedorCarpetas"></div>
+        </section>
+
+        <section id="santuarioRiesgo" class="santuario-riesgo hidden">
+            <div class="santuario-header">
+                <h2>🔴 Santuario de Especies en Peligro</h2>
+                <p>Estas especies están luchando por su supervivencia. Aprender sobre ellas es el primer paso para protegerlas.</p>
+            </div>
+            <div id="listaPeligro" class="grid-especie">
+        </div>
+        </section>
+
+    </main>
+
+    <div id="quizModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <span id="quizRacha">Racha: 0 🔥</span>
+            <h2 id="preguntaTexto"></h2>
+            <img id="quizImagen" src="" alt="">
+            <div id="opcionesContainer" class="grid-opciones"></div>
+        </div>
     </div>
+
+    <script src="js/app.js"></script>
 </body>
 </html>
