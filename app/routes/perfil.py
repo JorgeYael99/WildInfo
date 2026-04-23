@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, Header, Depends
-from app.core.config import settings
+from core.config import settings
 
 router = APIRouter(prefix="/perfil", tags=["Perfil"])
 

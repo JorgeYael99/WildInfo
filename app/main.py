@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.core.config import settings
-from app.models.database import create_db_pool, init_db
-from app.routes import animales, perfil
+from core.config import settings
+from models.database import create_db_pool, init_db
+from routes import animales, perfil
 
 
 @asynccontextmanager

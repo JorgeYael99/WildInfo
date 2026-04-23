@@ -1,4 +1,4 @@
-from .test_services import (
+from test_services import (
     test_fetch_animal_data_lion,
     test_fetch_animal_data_no_existe,
     test_fetch_sugerencias,

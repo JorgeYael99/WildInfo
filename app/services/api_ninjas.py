@@ -1,5 +1,5 @@
 import httpx
-from app.core.config import settings
+from core.config import settings
 
 
 async def fetch_animal_data(nombre: str) -> dict | None:

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Request, Header, Depends
-from app.services.api_ninjas import fetch_animal_data, fetch_sugerencias
-from app.services.unsplash import fetch_unsplash_image
-from app.services.wikipedia import fetch_wikipedia_resumen
-from app.core.config import settings
+from services.api_ninjas import fetch_animal_data, fetch_sugerencias
+from services.unsplash import fetch_unsplash_image
+from services.wikipedia import fetch_wikipedia_resumen
+from core.config import settings
 
 router = APIRouter(prefix="/animales", tags=["Animales"])
 
