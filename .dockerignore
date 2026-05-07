@@ -2,7 +2,9 @@ node_modules
 dist
 build
 .git
-.env
+__pycache__
+*.pyc
 Dockerfile
 .dockerignore
 npm-debug.log
+fase1/

@@ -1,11 +1,11 @@
-<<<<<<< HEAD
-from fastapi import APIRouter, Request, HTTPException, Header, Depends
-from core.config import settings
-=======
-from fastapi import APIRouter, HTTPException, Request
->>>>>>> 66971ef59b1248e515911d0174cee7664f3b2df1
+from fastapi import APIRouter, HTTPException, Request, Header
+from app.core.config import settings
 
 router = APIRouter(prefix="/perfil", tags=["Perfil"])
+
+def verify_api_key(x_api_key: str = Header(None)):
+    if x_api_key != settings.api_secret_key:
+        raise HTTPException(status_code=401, detail="Firma digital no válida o ausente")
 
 def get_current_user(request: Request):
     user_id = request.headers.get("X-User-Id")
@@ -29,7 +29,8 @@ async def get_perfil(request: Request):
         return dict(row)
 
 @router.put("/progreso")
-async def update_perfil(request: Request, d: dict):
+async def update_perfil(request: Request, d: dict, x_api_key: str = Header(None)):
+    verify_api_key(x_api_key)
     user_data = get_current_user(request)
     user_id = user_data["user_id"]
     pool = request.app.state.db_pool

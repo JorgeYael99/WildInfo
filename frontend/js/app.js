@@ -1,5 +1,6 @@
 /* --- CONFIGURACIÓN INICIAL --- */
 const API_URL = 'http://localhost:8000';
+const API_SECRET_KEY = 'Cisco_Net_2026_ClaveSegura';
 
 function getAuthHeaders() {
     const userData = JSON.parse(localStorage.getItem('usuario_wildinfo') || '{}');
@@ -8,6 +9,13 @@ function getAuthHeaders() {
         'Authorization': `Bearer ${userData.token}`,
         'X-User-Id': userData.user_id,
         'X-Username': userData.username || ''
+    };
+}
+
+function getSecureHeaders() {
+    return {
+        ...getAuthHeaders(),
+        'X-API-KEY': API_SECRET_KEY
     };
 }
 
@@ -79,7 +87,7 @@ function actualizarUI() {
 }
 
 async function sincronizar() {
-    const headers = getAuthHeaders();
+    const headers = getSecureHeaders();
     if (!headers['Authorization']) return;
     
     try {
@@ -176,7 +184,7 @@ function mostrarResultado(a) {
 
 async function guardar() {
     if (!animalActual) return;
-    const headers = getAuthHeaders();
+    const headers = getSecureHeaders();
     if (!headers['Authorization']) return;
     
     try {
@@ -285,7 +293,7 @@ function generarHTML(a, esPeligro) {
 async function eliminar(e, n) {
     e.stopPropagation();
     if (!confirm(`¿Eliminar a ${n} de tu colección?`)) return;
-    const headers = getAuthHeaders();
+    const headers = getSecureHeaders();
     if (!headers['Authorization']) return;
     
     try {

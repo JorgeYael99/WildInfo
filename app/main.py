@@ -2,16 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-<<<<<<< HEAD
-from core.config import settings
-from models.database import create_db_pool, init_db
-from routes import animales, perfil
-
-=======
 from app.core.config import settings
 from app.models.database import create_db_pool, init_db
 from app.routes import animales, perfil, auth
->>>>>>> 66971ef59b1248e515911d0174cee7664f3b2df1
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +17,7 @@ app = FastAPI(title="WildInfo Pro", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5500", "http://127.0.0.1:5500", "null"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5500", "http://127.0.0.1:5500", "http://localhost", "http://127.0.0.1", "null"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

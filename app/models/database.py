@@ -1,5 +1,5 @@
 import asyncpg
-from core.config import settings
+from app.core.config import settings
 
 async def create_db_pool():
     return await asyncpg.create_pool(settings.database_url)

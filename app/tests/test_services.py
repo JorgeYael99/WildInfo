@@ -1,7 +1,7 @@
 import pytest
-from services.api_ninjas import fetch_animal_data, fetch_sugerencias
-from services.unsplash import fetch_unsplash_image
-from services.wikipedia import fetch_wikipedia_resumen
+from app.services.api_ninjas import fetch_animal_data, fetch_sugerencias
+from app.services.unsplash import fetch_unsplash_image
+from app.services.wikipedia import fetch_wikipedia_resumen
 
 
 @pytest.mark.asyncio

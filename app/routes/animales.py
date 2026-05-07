@@ -1,17 +1,14 @@
-<<<<<<< HEAD
-from fastapi import APIRouter, HTTPException, Request, Header, Depends
-from services.api_ninjas import fetch_animal_data, fetch_sugerencias
-from services.unsplash import fetch_unsplash_image
-from services.wikipedia import fetch_wikipedia_resumen
-from core.config import settings
-=======
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Header
 from app.services.api_ninjas import fetch_animal_data, fetch_sugerencias
 from app.services.unsplash import fetch_unsplash_image
 from app.services.wikipedia import fetch_wikipedia_resumen
->>>>>>> 66971ef59b1248e515911d0174cee7664f3b2df1
+from app.core.config import settings
 
 router = APIRouter(prefix="/animales", tags=["Animales"])
+
+def verify_api_key(x_api_key: str = Header(None)):
+    if x_api_key != settings.api_secret_key:
+        raise HTTPException(status_code=401, detail="Firma digital no válida o ausente")
 
 def get_current_user(request: Request):
     user_id = request.headers.get("X-User-Id")
@@ -50,7 +47,8 @@ async def get_animal(nombre: str):
     }
 
 @router.post("/")
-async def save_animal(request: Request, animal: dict):
+async def save_animal(request: Request, animal: dict, x_api_key: str = Header(None)):
+    verify_api_key(x_api_key)
     user_data = get_current_user(request)
     user_id = user_data["user_id"]
     pool = request.app.state.db_pool
@@ -77,7 +75,8 @@ async def list_animales(request: Request):
         return [dict(r) for r in rows]
 
 @router.delete("/{nombre}")
-async def delete_animal(request: Request, nombre: str):
+async def delete_animal(request: Request, nombre: str, x_api_key: str = Header(None)):
+    verify_api_key(x_api_key)
     user_data = get_current_user(request)
     user_id = user_data["user_id"]
     pool = request.app.state.db_pool
