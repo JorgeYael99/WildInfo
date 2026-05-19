@@ -21,8 +21,6 @@ function getSecureHeaders() {
 
 let animalActual = null;
 let favoritosLocales = [];
-let rachaActual = 0;
-
 // Estado inicial del perfil
 let estadoPerfil = { 
     puntos: 0, 
@@ -356,80 +354,272 @@ async function eliminar(e, n) {
     }
 }
 
-/* --- SISTEMA DE QUIZ --- */
-document.getElementById('btnQuiz').onclick = () => {
+/* --- SISTEMA DE QUIZ MEJORADO --- */
+
+let quizActivo = null;
+
+document.getElementById('btnQuiz').onclick = iniciarQuiz;
+
+function iniciarQuiz() {
     if (favoritosLocales.length < 3) {
         return alert("Necesitas al menos 3 animales en tu enciclopedia para jugar.");
     }
+
+    const cola = [];
+    const TIPOS = ['clase', 'familia', 'reino', 'peligro'];
+
+    for (let i = 0; i < 10; i++) {
+        const a = favoritosLocales[Math.floor(Math.random() * favoritosLocales.length)];
+        const tipo = TIPOS[i % TIPOS.length];
+        const p = crearPregunta(tipo, a);
+        if (p) cola.push(p);
+    }
+
+    cola.sort(() => Math.random() - 0.5);
+
+    quizActivo = {
+        cola,
+        actual: 0,
+        aciertos: 0,
+        fallos: 0,
+        racha_max: 0,
+        racha_act: 0,
+        respondida: false,
+        timerSegundos: 15,
+        timerId: null,
+    };
+
     document.getElementById('quizModal').classList.remove('hidden');
-    rachaActual = 0;
-    document.getElementById('quizRacha').textContent = `Racha: 0 / 10 🔥`;
-    generarPregunta();
-};
-
-function generarPregunta() {
-    const a = favoritosLocales[Math.floor(Math.random() * favoritosLocales.length)];
-    const todasLasClases = [...new Set(favoritosLocales.map(x => x.clase))];
-    
-    let opciones = [a.clase];
-    const otrasClases = todasLasClases.filter(c => c !== a.clase).sort(() => 0.5 - Math.random());
-    opciones.push(...otrasClases.slice(0, 3));
-    
-    opciones.sort(() => 0.5 - Math.random());
-
-    document.getElementById('preguntaTexto').textContent = `¿A qué clase pertenece el/la ${a.nombre}?`;
-    document.getElementById('quizImagen').src = a.url_imagen;
-    document.getElementById('opcionesContainer').innerHTML = opciones.map(o => `
-        <button class="opcion-btn" onclick="validarPregunta(this, '${o}', '${a.clase}')">${o}</button>
-    `).join('');
+    document.getElementById('quizResultados').classList.add('hidden');
+    document.getElementById('quizJuego').classList.remove('hidden');
+    mostrarPregunta();
 }
 
-window.validarPregunta = (btn, seleccion, correcta) => {
-    if (seleccion === correcta) {
-        btn.classList.add('correcto');
-        rachaActual++;
-        document.getElementById('quizRacha').textContent = `Racha: ${rachaActual} / 10 🔥`;
-        
-        if (rachaActual === 10) {
-            setTimeout(finalizarQuizExitoso, 600);
-        } else {
-            setTimeout(generarPregunta, 1000);
-        }
-    } else {
-        btn.classList.add('incorrecto');
-        setTimeout(() => {
-            alert(`¡Respuesta incorrecta! Tu racha fue de ${rachaActual}. Inténtalo de nuevo.`);
-            rachaActual = 0;
-            document.getElementById('quizModal').classList.add('hidden');
-        }, 400);
-    }
-};
+function crearPregunta(tipo, animal) {
+    const todos = favoritosLocales;
 
-async function finalizarQuizExitoso() {
-    alert("¡Increíble! Has completado el Reto de 10 preguntas.");
-    estadoPerfil.puntos += 20; 
-    
-    if (rachaActual > estadoPerfil.racha_maxima) {
-        estadoPerfil.racha_maxima = rachaActual;
+    switch (tipo) {
+        case 'clase': {
+            const correcta = animal.clase;
+            if (!correcta) return null;
+            const clases = [...new Set(todos.map(x => x.clase).filter(c => c && c !== correcta))];
+            if (clases.length < 3) return null;
+            const distractores = clases.sort(() => Math.random() - 0.5).slice(0, 3);
+            const opciones = [correcta, ...distractores].sort(() => Math.random() - 0.5);
+            return { tipo, animal, pregunta: `¿A qué clase pertenece ${animal.nombre}?`, correcta, opciones };
+        }
+        case 'familia': {
+            const correcta = animal.familia || animal.clase;
+            const familias = [...new Set(todos.map(x => x.familia).filter(f => f && f !== correcta))];
+            if (familias.length < 3) return crearPregunta('clase', animal);
+            const distractores = familias.sort(() => Math.random() - 0.5).slice(0, 3);
+            const opciones = [correcta, ...distractores].sort(() => Math.random() - 0.5);
+            return { tipo, animal, pregunta: `¿De qué familia es ${animal.nombre}?`, correcta, opciones };
+        }
+        case 'reino': {
+            const opciones = ['Animalia', 'Plantae', 'Fungi', 'Protista'].sort(() => Math.random() - 0.5);
+            return { tipo, animal, pregunta: `¿A qué reino pertenece ${animal.nombre}?`, correcta: 'Animalia', opciones };
+        }
+        case 'peligro': {
+            const opciones = ['Sí', 'No'];
+            return {
+                tipo, animal,
+                pregunta: `¿Está ${animal.nombre} en peligro de extinción?`,
+                correcta: animal.en_peligro ? 'Sí' : 'No',
+                opciones,
+            };
+        }
+        default: return null;
     }
-    
-    estadoPerfil.badge_oro = true;
-    document.getElementById('badgeOro').classList.add('unlocked');
+}
+
+function mostrarPregunta() {
+    if (!quizActivo || quizActivo.actual >= quizActivo.cola.length) {
+        finalizarQuiz();
+        return;
+    }
+
+    const p = quizActivo.cola[quizActivo.actual];
+    quizActivo.respondida = false;
+    quizActivo.timerSegundos = 15;
+
+    document.getElementById('preguntaTexto').textContent = p.pregunta;
+    document.getElementById('quizImagen').src = p.animal.url_imagen || '';
+    document.getElementById('quizImagen').alt = p.animal.nombre;
+
+    document.getElementById('quizContador').textContent = `Pregunta ${quizActivo.actual + 1} / 10`;
+    document.getElementById('quizProgresoFill').style.width = `${(quizActivo.actual / 10) * 100}%`;
+    document.getElementById('quizRacha').textContent = `🔥 ${quizActivo.racha_act}`;
+
+    document.getElementById('opcionesContainer').innerHTML = p.opciones.map(o =>
+        `<button class="opcion-btn" data-valor="${o}">${o}</button>`
+    ).join('');
+
+    document.getElementById('opcionesContainer').onclick = (e) => {
+        const btn = e.target.closest('.opcion-btn');
+        if (btn) responderPregunta(btn);
+    };
+
+    document.getElementById('quizFeedback').classList.add('hidden');
+    iniciarTimer();
+}
+
+function iniciarTimer() {
+    detenerTimer();
+    actualizarTimerDisplay();
+    quizActivo.timerId = setInterval(() => {
+        quizActivo.timerSegundos--;
+        actualizarTimerDisplay();
+        if (quizActivo.timerSegundos <= 0) {
+            detenerTimer();
+            tiempoAgotado();
+        }
+    }, 1000);
+}
+
+function detenerTimer() {
+    if (quizActivo.timerId) {
+        clearInterval(quizActivo.timerId);
+        quizActivo.timerId = null;
+    }
+}
+
+function actualizarTimerDisplay() {
+    const t = quizActivo.timerSegundos;
+    document.getElementById('quizTimer').textContent = `⏱️ ${t}s`;
+    const bar = document.getElementById('quizTimerBar');
+    bar.style.width = `${(t / 15) * 100}%`;
+    bar.style.background = t > 5 ? '#4ade80' : t > 3 ? '#fbbf24' : '#ef4444';
+}
+
+function tiempoAgotado() {
+    if (quizActivo.respondida) return;
+    quizActivo.respondida = true;
+    quizActivo.fallos++;
+    quizActivo.racha_act = 0;
+    bloquearBotones();
+    mostrarFeedback(false, '⏰ ¡Se acabó el tiempo!');
+    setTimeout(avanzarPregunta, 1500);
+}
+
+function responderPregunta(btn) {
+    if (quizActivo.respondida) return;
+    quizActivo.respondida = true;
+    detenerTimer();
+
+    const p = quizActivo.cola[quizActivo.actual];
+    const seleccion = btn.dataset.valor;
+    const correcto = seleccion === p.correcta;
+
+    bloquearBotones();
+    btn.classList.add(correcto ? 'correcto' : 'incorrecto');
+
+    if (!correcto) {
+        document.querySelectorAll('.opcion-btn').forEach(b => {
+            if (b.dataset.valor === p.correcta) b.classList.add('correcto');
+        });
+    }
+
+    if (correcto) {
+        quizActivo.aciertos++;
+        quizActivo.racha_act++;
+        if (quizActivo.racha_act > quizActivo.racha_max) {
+            quizActivo.racha_max = quizActivo.racha_act;
+        }
+        mostrarFeedback(true, '✅ ¡Correcto!');
+    } else {
+        quizActivo.fallos++;
+        quizActivo.racha_act = 0;
+        mostrarFeedback(false, `❌ ${p.correcta}`);
+    }
+
+    setTimeout(avanzarPregunta, 1500);
+}
+
+function bloquearBotones() {
+    document.querySelectorAll('.opcion-btn').forEach(b => b.disabled = true);
+}
+
+function avanzarPregunta() {
+    quizActivo.actual++;
+    mostrarPregunta();
+}
+
+function mostrarFeedback(esCorrecto, mensaje) {
+    const fb = document.getElementById('quizFeedback');
+    fb.textContent = mensaje;
+    fb.className = 'quiz-feedback';
+    fb.classList.add(esCorrecto ? 'feedback-correcto' : 'feedback-incorrecto');
+    fb.classList.remove('hidden');
+}
+
+function finalizarQuiz() {
+    detenerTimer();
+
+    const total = quizActivo.aciertos + quizActivo.fallos;
+    const porcentaje = total > 0 ? Math.round((quizActivo.aciertos / total) * 100) : 0;
+
+    document.getElementById('quizJuego').classList.add('hidden');
+
+    let mensaje, emoji;
+    if (porcentaje === 100) { mensaje = '¡Perfecto! Eres un verdadero naturalista'; emoji = '🏆'; }
+    else if (porcentaje >= 80) { mensaje = '¡Excelente trabajo!'; emoji = '🌟'; }
+    else if (porcentaje >= 60) { mensaje = 'Buen conocimiento'; emoji = '👍'; }
+    else if (porcentaje >= 40) { mensaje = 'Sigue practicando'; emoji = '📚'; }
+    else { mensaje = 'Necesitas explorar más especies'; emoji = '🔍'; }
+
+    document.getElementById('quizResultados').innerHTML = `
+        <div class="resultados-quiz">
+            <div class="resultado-emoji">${emoji}</div>
+            <h2 style="color:#f8fafc;margin-bottom:1rem;">${mensaje}</h2>
+            <div class="resultado-stats">
+                <div class="stat-item"><span class="stat-num">${quizActivo.aciertos}</span><span class="stat-label">Aciertos</span></div>
+                <div class="stat-item"><span class="stat-num">${quizActivo.fallos}</span><span class="stat-label">Fallos</span></div>
+                <div class="stat-item"><span class="stat-num">${porcentaje}%</span><span class="stat-label">Precisión</span></div>
+                <div class="stat-item"><span class="stat-num">${quizActivo.racha_max}</span><span class="stat-label">Racha máx</span></div>
+            </div>
+            <button class="btn-guardar" onclick="cerrarQuiz()">Continuar</button>
+        </div>
+    `;
+    document.getElementById('quizResultados').classList.remove('hidden');
+
+    const puntosGanados = quizActivo.aciertos * 3 + (quizActivo.racha_max >= 5 ? 10 : 0);
+    estadoPerfil.puntos += puntosGanados;
+
+    if (quizActivo.racha_max > estadoPerfil.racha_maxima) {
+        estadoPerfil.racha_maxima = quizActivo.racha_max;
+    }
+
+    if (quizActivo.racha_max >= 10) {
+        estadoPerfil.badge_oro = true;
+        document.getElementById('badgeOro').classList.add('unlocked');
+    }
+
+    const nuevasClases = new Set(favoritosLocales.map(a => a.clase)).size;
+    if (nuevasClases >= 5) {
+        estadoPerfil.badge_diversidad = true;
+        document.getElementById('badgeDiversidad').classList.add('unlocked');
+    }
 
     const nuevoR = [...RANGOS].reverse().find(r => estadoPerfil.puntos >= r.min);
-    estadoPerfil.rango_titulo = nuevoR.t;
+    if (nuevoR) estadoPerfil.rango_titulo = nuevoR.t;
 
     actualizarUI();
-    await sincronizar();
-    document.getElementById('quizModal').classList.add('hidden');
+    sincronizar();
 }
+
+window.cerrarQuiz = () => {
+    detenerTimer();
+    document.getElementById('quizModal').classList.add('hidden');
+    document.getElementById('quizResultados').classList.add('hidden');
+    document.getElementById('quizJuego').classList.remove('hidden');
+    quizActivo = null;
+};
 
 /* --- INICIALIZACIÓN --- */
 document.getElementById('buscarBtn').onclick = buscarAnimal;
 document.getElementById('guardarBtn').onclick = guardar;
-document.querySelector('.close-modal').onclick = () => {
-    document.getElementById('quizModal').classList.add('hidden');
-};
+document.querySelector('.close-modal').onclick = cerrarQuiz;
 
 // Cargar datos iniciales
 cargarPerfil();

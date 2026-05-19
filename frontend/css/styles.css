@@ -418,3 +418,116 @@ body.modo-santuario {
     font-size: 0.8rem;
     font-weight: bold;
 }
+
+/* --- QUIZ HEADER --- */
+.quiz-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.quiz-progress-bar {
+    flex-grow: 1;
+    height: 8px;
+    background: #0f172a;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.quiz-progreso-fill {
+    height: 100%;
+    background: #4ade80;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+#quizContador {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+/* --- QUIZ STATS --- */
+.quiz-stats {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0 8px;
+    font-size: 0.95rem;
+    color: #94a3b8;
+}
+
+/* --- TIMER BAR --- */
+.quiz-timer-bar {
+    height: 4px;
+    background: #0f172a;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+#quizTimerBar {
+    height: 100%;
+    background: #4ade80;
+    border-radius: 2px;
+    width: 100%;
+    transition: width 1s linear, background 0.3s;
+}
+
+/* --- FEEDBACK --- */
+.quiz-feedback {
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 12px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 0.95rem;
+}
+.feedback-correcto {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.feedback-incorrecto {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* --- RESULTS --- */
+.quiz-resultados {
+    padding: 10px 0;
+}
+.resultados-quiz { text-align: center; }
+.resultado-emoji { font-size: 3.5rem; margin-bottom: 5px; }
+.resultado-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+}
+.stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.stat-num {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #4ade80;
+    display: block;
+    line-height: 1.2;
+}
+.stat-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    display: block;
+    margin-top: 4px;
+}
+
+/* Deshabilitar botones durante feedback */
+.opcion-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.opcion-btn:disabled:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: none;
+}

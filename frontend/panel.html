@@ -80,10 +80,27 @@
     <div id="quizModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <span id="quizRacha">Racha: 0 🔥</span>
-            <h2 id="preguntaTexto"></h2>
-            <img id="quizImagen" src="" alt="Imagen para el quiz">
-            <div id="opcionesContainer" class="grid-opciones"></div>
+
+            <div id="quizJuego">
+                <div class="quiz-header">
+                    <div class="quiz-progress-bar"><div id="quizProgresoFill" class="quiz-progreso-fill"></div></div>
+                    <span id="quizContador">Pregunta 1 / 10</span>
+                </div>
+
+                <div class="quiz-stats">
+                    <span id="quizRacha">🔥 0</span>
+                    <span id="quizTimer">⏱️ 15s</span>
+                </div>
+
+                <div class="quiz-timer-bar"><div id="quizTimerBar"></div></div>
+
+                <h2 id="preguntaTexto"></h2>
+                <img id="quizImagen" src="" alt="Imagen para el quiz">
+                <div id="opcionesContainer" class="grid-opciones"></div>
+                <div id="quizFeedback" class="quiz-feedback hidden"></div>
+            </div>
+
+            <div id="quizResultados" class="quiz-resultados hidden"></div>
         </div>
     </div>
 

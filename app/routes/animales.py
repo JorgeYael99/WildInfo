@@ -73,7 +73,8 @@ async def get_animal(nombre: str):
         "dieta": char.get("diet") or char.get("main_prey") or "No disponible",
         "longevidad": char.get("lifespan") or "No disponible",
         "peso": char.get("weight") or "No disponible",
-        "velocidad": char.get("top_speed") or "No disponible"
+        "velocidad": char.get("top_speed") or "No disponible",
+        "ubicaciones": data.get("locations", [])
     }
 
 @router.post("/")
