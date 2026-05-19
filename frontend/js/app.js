@@ -30,6 +30,74 @@ let estadoPerfil = {
     rango_titulo: "Observador" 
 };
 
+const UBICACIONES = {
+    "Worldwide": { lat: 20, lng: 0, zoom: 1, radio: 5000000 },
+    "Africa": { lat: 1.5, lng: 17.5, zoom: 2, radio: 3500000 },
+    "Asia": { lat: 34, lng: 100, zoom: 2, radio: 4000000 },
+    "Europe": { lat: 50, lng: 10, zoom: 2, radio: 2000000 },
+    "North America": { lat: 45, lng: -100, zoom: 2, radio: 3000000 },
+    "South America": { lat: -15, lng: -60, zoom: 2, radio: 2800000 },
+    "Australia": { lat: -25, lng: 135, zoom: 3, radio: 1500000 },
+    "Oceania": { lat: -20, lng: 150, zoom: 2, radio: 2500000 },
+    "Central America": { lat: 12, lng: -86, zoom: 3, radio: 800000 },
+    "Middle East": { lat: 25, lng: 45, zoom: 3, radio: 1200000 },
+    "Caribbean": { lat: 20, lng: -75, zoom: 3, radio: 600000 },
+    "Antarctica": { lat: -75, lng: 0, zoom: 2, radio: 3500000 },
+    "Arctic": { lat: 75, lng: 0, zoom: 2, radio: 2000000 },
+    "North Africa": { lat: 30, lng: 5, zoom: 3, radio: 1500000 },
+    "Sub-Saharan Africa": { lat: -5, lng: 25, zoom: 2, radio: 2500000 },
+    "East Africa": { lat: -2, lng: 35, zoom: 3, radio: 1000000 },
+    "West Africa": { lat: 8, lng: -5, zoom: 3, radio: 1000000 },
+    "Southern Africa": { lat: -25, lng: 25, zoom: 3, radio: 1000000 },
+    "Central Africa": { lat: 0, lng: 20, zoom: 3, radio: 1000000 },
+    "Southeast Asia": { lat: 10, lng: 105, zoom: 3, radio: 1500000 },
+    "South Asia": { lat: 20, lng: 80, zoom: 3, radio: 1000000 },
+    "East Asia": { lat: 35, lng: 110, zoom: 3, radio: 1500000 },
+    "Central Asia": { lat: 45, lng: 65, zoom: 3, radio: 1200000 },
+    "Western Asia": { lat: 30, lng: 45, zoom: 3, radio: 1000000 },
+    "South America": { lat: -15, lng: -60, zoom: 2, radio: 2800000 },
+    "Amazon Basin": { lat: -5, lng: -60, zoom: 3, radio: 1500000 },
+    "Andes": { lat: -20, lng: -70, zoom: 3, radio: 800000 },
+    "Patagonia": { lat: -45, lng: -70, zoom: 4, radio: 500000 },
+    "Central Europe": { lat: 50, lng: 15, zoom: 3, radio: 600000 },
+    "Eastern Europe": { lat: 55, lng: 30, zoom: 3, radio: 800000 },
+    "Western Europe": { lat: 50, lng: 0, zoom: 3, radio: 500000 },
+    "Scandinavia": { lat: 60, lng: 15, zoom: 3, radio: 800000 },
+    "Mediterranean": { lat: 38, lng: 15, zoom: 3, radio: 1000000 },
+    "Balkans": { lat: 42, lng: 22, zoom: 4, radio: 400000 },
+    "Russia": { lat: 60, lng: 60, zoom: 2, radio: 3000000 },
+    "Siberia": { lat: 60, lng: 100, zoom: 3, radio: 2000000 },
+    "Indian subcontinent": { lat: 22, lng: 80, zoom: 3, radio: 1200000 },
+    "Indian Ocean": { lat: -10, lng: 70, zoom: 3, radio: 2000000 },
+    "Pacific Ocean": { lat: 0, lng: -160, zoom: 2, radio: 4000000 },
+    "Atlantic Ocean": { lat: 0, lng: -30, zoom: 2, radio: 3000000 },
+    "Caribbean Sea": { lat: 18, lng: -75, zoom: 4, radio: 500000 },
+    "Mediterranean Sea": { lat: 38, lng: 15, zoom: 3, radio: 800000 },
+    "Red Sea": { lat: 22, lng: 38, zoom: 4, radio: 300000 },
+    "Coral Sea": { lat: -18, lng: 155, zoom: 4, radio: 600000 },
+    "Madagascar": { lat: -20, lng: 47, zoom: 4, radio: 400000 },
+    "New Guinea": { lat: -5, lng: 140, zoom: 4, radio: 400000 },
+    "Greenland": { lat: 72, lng: -40, zoom: 3, radio: 800000 },
+    "Indonesia": { lat: -5, lng: 120, zoom: 3, radio: 1200000 },
+    "Philippines": { lat: 12, lng: 122, zoom: 4, radio: 400000 },
+    "Japan": { lat: 36, lng: 138, zoom: 4, radio: 300000 },
+    "China": { lat: 35, lng: 105, zoom: 3, radio: 2000000 },
+    "India": { lat: 22, lng: 80, zoom: 3, radio: 1200000 },
+    "Brazil": { lat: -14, lng: -55, zoom: 3, radio: 2000000 },
+    "Mexico": { lat: 22, lng: -100, zoom: 3, radio: 800000 },
+    "Australia": { lat: -25, lng: 135, zoom: 3, radio: 1500000 },
+    "New Zealand": { lat: -42, lng: 172, zoom: 4, radio: 500000 },
+    "Hawaii": { lat: 21, lng: -157, zoom: 5, radio: 200000 },
+    "Galapagos Islands": { lat: -1, lng: -90, zoom: 5, radio: 100000 },
+    "North Pole": { lat: 85, lng: 0, zoom: 3, radio: 1000000 },
+    "South Pole": { lat: -85, lng: 0, zoom: 3, radio: 1000000 },
+    "Tropical": { lat: 0, lng: 0, zoom: 1, radio: 3000000 },
+    "Temperate": { lat: 45, lng: 0, zoom: 1, radio: 2000000 },
+    "Subtropical": { lat: 25, lng: 0, zoom: 1, radio: 2000000 },
+    "Boreal": { lat: 55, lng: 0, zoom: 2, radio: 1500000 },
+};
+let mapaActual = null;
+
 const ENCICLOPEDIA_INFO = {
     "Mammalia": "Mamíferos: Sangre caliente, pelo y alimentan crías con leche.",
     "Aves": "Aves: Plumas, huesos huecos y reproducción ovípara.",
@@ -138,6 +206,8 @@ async function buscarAnimal() {
     document.getElementById('resumenWikipedia').textContent = "Consultando base de datos enciclopédica...";
     document.getElementById('statusBadge').classList.add('hidden');
     document.getElementById('enlaceWikipedia').style.display = 'none';
+    document.getElementById('mapaContainer').classList.add('hidden');
+    if (mapaActual) { mapaActual.remove(); mapaActual = null; }
 
     try {
         // 1. Petición base de información científica
@@ -216,9 +286,162 @@ function mostrarResultado(a) {
         }
         
         document.getElementById('resultado').classList.remove('hidden');
+        mostrarMapa(a.ubicaciones, a.nombre);
         
     } catch (error) {
         console.error("Error crítico actualizando el DOM:", error);
+    }
+}
+
+const PAISES_CONTINENTE = {
+    "Angola":"Africa","Botswana":"Africa","Kenya":"Africa","Mozambique":"Africa",
+    "Namibia":"Africa","South Africa":"Africa","Tanzania":"Africa","Zambia":"Africa",
+    "Zimbabwe":"Africa","Ethiopia":"Africa","Sudan":"Africa","Uganda":"Africa",
+    "Ghana":"Africa","Nigeria":"Africa","Ivory Coast":"Africa","Senegal":"Africa",
+    "Mali":"Africa","Chad":"Africa","Niger":"Africa","Somalia":"Africa",
+    "DRC":"Africa","Congo":"Africa","Rwanda":"Africa","Burundi":"Africa",
+    "Malawi":"Africa","Madagascar":"Africa","Egypt":"Africa","Libya":"Africa",
+    "Algeria":"Africa","Morocco":"Africa","Tunisia":"Africa","Eritrea":"Africa",
+    "Cameroon":"Africa","Gabon":"Africa","Benin":"Africa","Burkina Faso":"Africa",
+    "Sierra Leone":"Africa","Liberia":"Africa","Mauritania":"Africa",
+    "China":"Asia","India":"Asia","Japan":"Asia","Philippines":"Asia",
+    "Indonesia":"Asia","Malaysia":"Asia","Thailand":"Asia","Vietnam":"Asia",
+    "Myanmar":"Asia","Bangladesh":"Asia","Pakistan":"Asia","Nepal":"Asia",
+    "Sri Lanka":"Asia","Mongolia":"Asia","South Korea":"Asia","Taiwan":"Asia",
+    "Cambodia":"Asia","Laos":"Asia","Singapore":"Asia","Afghanistan":"Asia",
+    "Iran":"Asia","Iraq":"Asia","Saudi Arabia":"Asia","Yemen":"Asia","Oman":"Asia",
+    "UAE":"Asia","Syria":"Asia","Jordan":"Asia","Israel":"Asia","Lebanon":"Asia",
+    "Turkey":"Asia","Russia":"Asia","Kazakhstan":"Asia","Uzbekistan":"Asia",
+    "France":"Europe","Germany":"Europe","Italy":"Europe","Spain":"Europe",
+    "Portugal":"Europe","Greece":"Europe","Poland":"Europe","Sweden":"Europe",
+    "Norway":"Europe","Finland":"Europe","Denmark":"Europe","Netherlands":"Europe",
+    "Belgium":"Europe","Switzerland":"Europe","Austria":"Europe","Ireland":"Europe",
+    "UK":"Europe","Iceland":"Europe","Hungary":"Europe","Czech Republic":"Europe",
+    "Slovakia":"Europe","Romania":"Europe","Bulgaria":"Europe","Croatia":"Europe",
+    "Serbia":"Europe","Ukraine":"Europe","Belarus":"Europe","Lithuania":"Europe",
+    "Latvia":"Europe","Estonia":"Europe","Albania":"Europe","Macedonia":"Europe",
+    "USA":"North America","Canada":"North America","Mexico":"North America",
+    "Guatemala":"North America","Honduras":"North America","Costa Rica":"North America",
+    "Panama":"North America","Cuba":"North America","Jamaica":"North America",
+    "Dominican Republic":"North America","Puerto Rico":"North America",
+    "El Salvador":"North America","Nicaragua":"North America","Belize":"North America",
+    "Brazil":"South America","Argentina":"South America","Chile":"South America",
+    "Peru":"South America","Colombia":"South America","Venezuela":"South America",
+    "Ecuador":"South America","Bolivia":"South America","Paraguay":"South America",
+    "Uruguay":"South America","Guyana":"South America","Suriname":"South America",
+    "Australia":"Oceania","New Zealand":"Oceania","Papua New Guinea":"Oceania",
+    "Fiji":"Oceania","Solomon Islands":"Oceania","Vanuatu":"Oceania",
+    "New Caledonia":"Oceania","Samoa":"Oceania","Tonga":"Oceania","Kiribati":"Oceania",
+};
+
+function mostrarMapa(ubicaciones, nombreAnimal = null) {
+    const container = document.getElementById('mapaContainer');
+    const mapDiv = document.getElementById('mapa');
+
+    console.log("mostrarMapa llamado con:", ubicaciones);
+    console.log("mapDiv existe:", !!mapDiv);
+    console.log("Leaflet L disponible:", typeof L !== "undefined");
+
+    if (!ubicaciones || !ubicaciones.length || !mapDiv) {
+        console.log("Ocultando mapa - condicion:", { sinUbicaciones: !ubicaciones, sinLength: !ubicaciones?.length, sinMapDiv: !mapDiv });
+        if (container) container.classList.add('hidden');
+        return;
+    }
+
+    if (mapaActual) { mapaActual.remove(); mapaActual = null; }
+
+    const puntos = [];
+    const visitados = new Set();
+
+    function agregarSiNoRepetido(coord) {
+        const key = `${coord.lat},${coord.lng}`;
+        if (!visitados.has(key)) {
+            visitados.add(key);
+            puntos.push(coord);
+        }
+    }
+
+    function normalizar(ubi) {
+        return ubi.replace(/-/g, " ").trim();
+    }
+
+    for (const u of ubicaciones) {
+        const nom = normalizar(u);
+        const coord = UBICACIONES[nom] || UBICACIONES[u];
+        if (coord) { agregarSiNoRepetido(coord); continue; }
+        const continente = PAISES_CONTINENTE[nom] || PAISES_CONTINENTE[u];
+        if (continente && UBICACIONES[continente]) { agregarSiNoRepetido(UBICACIONES[continente]); continue; }
+        for (const parte of nom.split(",").map(s => s.trim())) {
+            const c = UBICACIONES[parte] || (PAISES_CONTINENTE[parte] && UBICACIONES[PAISES_CONTINENTE[parte]]);
+            if (c) { agregarSiNoRepetido(c); break; }
+        }
+        const clave = Object.keys(UBICACIONES).find(k => nom.includes(k) || k.includes(nom));
+        if (clave) { agregarSiNoRepetido(UBICACIONES[clave]); }
+    }
+
+    console.log("Puntos encontrados:", puntos.length, puntos);
+
+    if (!puntos.length) {
+        console.log("No se encontraron coordenadas - ocultando mapa");
+        if (container) container.classList.add('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+    console.log("Inicializando Leaflet map...");
+
+    try {
+        mapaActual = L.map(mapDiv).setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18,
+        }).addTo(mapaActual);
+
+        puntos.forEach(p => {
+            L.circle([p.lat, p.lng], {
+                radius: p.radio || 2000000,
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.25,
+                weight: 1.5,
+                opacity: 0.6,
+            }).addTo(mapaActual);
+        });
+
+        const bounds = L.latLngBounds(puntos.map(p => [p.lat, p.lng]));
+        if (puntos.length > 1) {
+            mapaActual.fitBounds(bounds, { padding: [40, 40] });
+        } else {
+            mapaActual.setView([puntos[0].lat, puntos[0].lng], puntos[0].zoom || 4);
+        }
+
+        setTimeout(() => mapaActual.invalidateSize(), 300);
+        console.log("Mapa renderizado correctamente");
+        if (nombreAnimal) agregarMapaCalor(nombreAnimal);
+    } catch (e) {
+        console.error("Error al renderizar mapa:", e);
+        if (container) container.classList.add('hidden');
+    }
+}
+
+async function agregarMapaCalor(nombre) {
+    try {
+        const res = await fetch(`${API_URL}/animales/mapa-calor/${encodeURIComponent(nombre)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.taxon_key) return;
+        
+        L.tileLayer(
+            `https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${data.taxon_key}&style=heatMap&bin=hex`,
+            {
+                opacity: 0.6,
+                attribution: '&copy; <a href="https://www.gbif.org">GBIF</a>',
+                maxZoom: 18,
+            }
+        ).addTo(mapaActual);
+    } catch (e) {
+        console.error("Error al cargar mapa de calor GBIF:", e);
     }
 }
 

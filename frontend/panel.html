@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WildInfo - Explorador Pro</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -61,6 +62,10 @@
             <div class="animal-imagen">
                 <img id="animalImagen" src="" alt="Imagen del animal">
             </div>
+            <div id="mapaContainer" class="mapa-container hidden">
+                <h3>🌍 Distribución Geográfica</h3>
+                <div id="mapa" class="mapa-leaflet"></div>
+            </div>
         </section>
 
         <section class="biblioteca-educativa">
@@ -104,6 +109,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/app.js"></script>
     <script>
         // Verificar autenticación al cargar

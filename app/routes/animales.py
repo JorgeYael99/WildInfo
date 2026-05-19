@@ -1,3 +1,4 @@
+import httpx
 from fastapi import APIRouter, HTTPException, Request, Header
 from app.services.api_ninjas import fetch_animal_data, fetch_sugerencias
 from app.services.unsplash import fetch_unsplash_image
@@ -74,7 +75,7 @@ async def get_animal(nombre: str):
         "longevidad": char.get("lifespan") or "No disponible",
         "peso": char.get("weight") or "No disponible",
         "velocidad": char.get("top_speed") or "No disponible",
-        "ubicaciones": data.get("locations", [])
+        "ubicaciones": data.get("locations") or []
     }
 
 @router.post("/")
@@ -131,3 +132,51 @@ async def get_wikipedia(nombre: str):
     familia = data.get("taxonomy", {}).get("family")
         
     return await fetch_wikipedia_resumen(nombre_oficial, nombre_cientifico=nombre_cientifico, familia=familia)
+
+def _normalizar_nombre_cientifico(nombre: str) -> str:
+    """Convierte 'PANTHERA TIGRIS TIGRIS' → 'Panthera tigris' (solo género y especie)."""
+    partes = nombre.strip().split()
+    if len(partes) >= 2:
+        genus = partes[0].capitalize()
+        species = partes[1].lower()
+        return f"{genus} {species}"
+    return nombre.strip()
+
+@router.get("/mapa-calor/{nombre}")
+async def get_heatmap_data(nombre: str):
+    data = await fetch_animal_data(nombre)
+    if not data:
+        raise HTTPException(status_code=404, detail="Animal no encontrado")
+    
+    scientific_name = data.get("taxonomy", {}).get("scientific_name")
+    common_name = data.get("name", nombre)
+    
+    search_names = []
+    if scientific_name:
+        normalized = _normalizar_nombre_cientifico(scientific_name)
+        if normalized not in ("", "n/a", "none", "unknown"):
+            search_names.append(normalized)
+    if common_name and common_name.lower() not in ("", "n/a", "none", "unknown"):
+        search_names.append(common_name)
+    if nombre not in search_names:
+        search_names.append(nombre)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            for attempt_name in search_names:
+                try:
+                    resp = await client.get(
+                        "https://api.gbif.org/v1/species/match",
+                        params={"name": attempt_name, "kingdom": "Animalia"},
+                        timeout=8.0
+                    )
+                    if resp.status_code == 200:
+                        gb = resp.json()
+                        if gb.get("usageKey") and gb.get("matchType") not in ("HIGHERRANK",):
+                            return {"taxon_key": gb["usageKey"], "nombre_cientifico": gb.get("scientificName", attempt_name)}
+                except Exception:
+                    continue
+    except Exception as e:
+        print(f"Error consultando GBIF: {e}")
+    
+    return {"taxon_key": None, "nombre_cientifico": scientific_name or common_name}
