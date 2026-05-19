@@ -127,59 +127,101 @@ async function buscarAnimal() {
     const n = animalInput.value.trim();
     if (!n) return;
 
+    // Limpieza absoluta preventiva de la interfaz
+    document.getElementById('animalNombre').textContent = "Buscando...";
+    document.getElementById('animalReino').textContent = "Reino: ---";
+    document.getElementById('animalClase').textContent = "Clase: ---";
+    document.getElementById('animalFamilia').textContent = "Familia: ---";
+    document.getElementById('animalHabitat').textContent = "Hábitat: ---";
+    document.getElementById('animalDieta').textContent = "Dieta: ---";
+    document.getElementById('animalLongevidad').textContent = "Longevidad: ---";
+    document.getElementById('animalPeso').textContent = "Peso: ---";
+    document.getElementById('animalVelocidad').textContent = "Velocidad: ---";
+    document.getElementById('resumenWikipedia').textContent = "Consultando base de datos enciclopédica...";
+    document.getElementById('statusBadge').classList.add('hidden');
+    document.getElementById('enlaceWikipedia').style.display = 'none';
+
     try {
-        const [infoR, imgR, wikiR] = await Promise.all([
-            fetch(`${API_URL}/animales/info/${n}`),
-            fetch(`${API_URL}/animales/imagen/${n}`),
-            fetch(`${API_URL}/animales/wikipedia/${n}`)
-        ]);
+        // 1. Petición base de información científica
+        const infoR = await fetch(`${API_URL}/animales/info/${encodeURIComponent(n)}`);
+
+        if (!infoR.ok) {
+            const errData = await infoR.json();
+            alert(`WildInfo: ${errData.detail || "No se encontraron datos."}`);
+            document.getElementById('animalNombre').textContent = "No disponible";
+            document.getElementById('resumenWikipedia').textContent = "La búsqueda no arrojó un animal válido.";
+            return;
+        }
 
         const info = await infoR.json();
+
+        // 2. CORRECCIÓN DEFINITIVA DE LAS RUTAS SECUNDARIAS (Evita el error 404 de concatenación)
+        const URL_IMAGEN = API_URL + '/animales/imagen/' + encodeURIComponent(info.nombre);
+        const URL_WIKIPEDIA = API_URL + '/animales/wikipedia/' + encodeURIComponent(info.nombre);
+
+        const [imgR, wikiR] = await Promise.all([
+            fetch(URL_IMAGEN),
+            fetch(URL_WIKIPEDIA)
+        ]);
+
         const img = await imgR.json();
         const wiki = wikiR.ok ? await wikiR.json() : null;
 
         animalActual = { 
             ...info, 
             url_imagen: img.url_imagen || '', 
-            resumen: wiki?.resumen || 'Sin resumen disponible.', 
+            resumen: wiki?.resumen || 'Sin resumen enciclopédico disponible para esta especie.', 
             enlace: wiki?.enlace_articulo || '#' 
         };
+        
         mostrarResultado(animalActual);
     } catch (e) { 
         console.error("Error al buscar animal:", e);
-        alert("Ocurrió un error al buscar la información.");
+        alert("Ocurrió un error al procesar la búsqueda.");
     }
 }
 
 function mostrarResultado(a) {
-    document.getElementById('animalNombre').textContent = a.nombre;
-    document.getElementById('animalClase').textContent = a.clase;
-    document.getElementById('animalFamilia').textContent = a.familia || 'N/A';
-    document.getElementById('animalReino').textContent = a.reino || 'Animalia';
-    document.getElementById('animalHabitat').textContent = a.habitat || 'No disponible';
-    document.getElementById('animalDieta').textContent = a.dieta || 'No disponible';
-    document.getElementById('animalLongevidad').textContent = a.寿命 || 'No disponible';
-    document.getElementById('animalPeso').textContent = a.peso || 'No disponible';
-    document.getElementById('animalVelocidad').textContent = a.velocidad || 'No disponible';
-    document.getElementById('animalImagen').src = a.url_imagen;
-    document.getElementById('resumenWikipedia').textContent = a.resumen || 'Sin información disponible.';
-    if (a.enlace && a.enlace !== '#') {
-        document.getElementById('enlaceWikipedia').href = a.enlace;
-        document.getElementById('enlaceWikipedia').style.display = 'inline-block';
-    } else {
-        document.getElementById('enlaceWikipedia').style.display = 'none';
+    try {
+        document.getElementById('animalNombre').textContent = a.nombre || 'Especie';
+        document.getElementById('animalClase').textContent = a.clase || 'Desconocida';
+        document.getElementById('animalFamilia').textContent = a.familia || 'N/A';
+        document.getElementById('animalReino').textContent = a.reino || 'Animalia';
+        
+        document.getElementById('animalHabitat').textContent = `Hábitat: ${a.habitat || 'No disponible'}`;
+        document.getElementById('animalDieta').textContent = `Dieta: ${a.dieta || 'No disponible'}`;
+        document.getElementById('animalLongevidad').textContent = `Longevidad: ${a.longevidad || 'No disponible'}`;
+        document.getElementById('animalPeso').textContent = `Peso: ${a.peso || 'No disponible'}`;
+        document.getElementById('animalVelocidad').textContent = `Velocidad: ${a.velocidad || 'No disponible'}`;
+        
+        document.getElementById('animalImagen').src = a.url_imagen || '';
+        document.getElementById('animalImagen').alt = `Fotografía de un ${a.nombre}`;
+        
+        document.getElementById('resumenWikipedia').textContent = a.resumen || 'Sin información disponible.';
+        
+        if (a.enlace && a.enlace !== '#') {
+            document.getElementById('enlaceWikipedia').href = a.enlace;
+            document.getElementById('enlaceWikipedia').style.display = 'inline-block';
+        } else {
+            document.getElementById('enlaceWikipedia').style.display = 'none';
+        }
+        
+        // Control del letrero de peligro de extinción
+        const statusBadge = document.getElementById('statusBadge');
+        if (a.en_peligro === true || a.en_peligro === 'true') {
+            statusBadge.textContent = '⚠️ EN PELIGRO DE EXTINCIÓN';
+            statusBadge.classList.remove('hidden');
+            statusBadge.style.display = 'block';
+        } else {
+            statusBadge.classList.add('hidden');
+            statusBadge.style.display = 'none';
+        }
+        
+        document.getElementById('resultado').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error("Error crítico actualizando el DOM:", error);
     }
-    
-    // Mostrar badge de peligro
-    const statusBadge = document.getElementById('statusBadge');
-    if (a.en_peligro) {
-        statusBadge.textContent = '⚠️ EN PELIGRO';
-        statusBadge.classList.remove('hidden');
-    } else {
-        statusBadge.classList.add('hidden');
-    }
-    
-    document.getElementById('resultado').classList.remove('hidden');
 }
 
 async function guardar() {
@@ -276,6 +318,16 @@ async function cargarFavoritos() {
         actualizarUI();
         sincronizar();
     } catch (e) { console.error("Error al cargar favoritos:", e); }
+    
+    if (favoritosLocales.length === 0) {
+        document.getElementById('contenedorCarpetas').innerHTML = `
+            <div class="empty-state">
+                <p style="text-align:center;color:#94a3b8;padding:2rem;">
+                    Aún no has añadido especies a tu enciclopeda.
+                    Busca un animal y presiona "Añadir a mi Enciclopedia".
+                </p>
+            </div>`;
+    }
 }
 
 function generarHTML(a, esPeligro) {
