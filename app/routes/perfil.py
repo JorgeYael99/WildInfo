@@ -22,10 +22,14 @@ async def get_perfil(request: Request):
     pool = request.app.state.db_pool
     
     async with pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT * FROM perfil_usuario WHERE usuario_id = $1", user_id)
+        row = await conn.fetchrow("SELECT puntos, racha_maxima, badge_oro, badge_diversidad, rango_titulo FROM perfil_usuario WHERE usuario_id = $1", user_id)
         if not row:
-            await conn.execute("INSERT INTO perfil_usuario (usuario_id) VALUES ($1)", user_id)
-            row = await conn.fetchrow("SELECT * FROM perfil_usuario WHERE usuario_id = $1", user_id)
+            # Forzamos la inserción con los campos base correctos si el perfil no existe
+            await conn.execute("""
+                INSERT INTO perfil_usuario (usuario_id, puntos, racha_maxima, badge_oro, badge_diversidad, rango_titulo)
+                VALUES ($1, 0, 0, FALSE, FALSE, 'Observador de Jardín')
+            """, user_id)
+            row = await conn.fetchrow("SELECT puntos, racha_maxima, badge_oro, badge_diversidad, rango_titulo FROM perfil_usuario WHERE usuario_id = $1", user_id)
         return dict(row)
 
 @router.put("/progreso")
@@ -37,7 +41,8 @@ async def update_perfil(request: Request, d: dict, x_api_key: str = Header(None)
     
     async with pool.acquire() as conn:
         await conn.execute("""
-            UPDATE perfil_usuario SET puntos=$1, racha_maxima=$2, 
-            badge_oro=$3, badge_diversidad=$4, rango_titulo=$5 WHERE usuario_id=$6
-        """, d['puntos'], d['racha_maxima'], d['badge_oro'], d['badge_diversidad'], d['rango_titulo'], user_id)
+            UPDATE perfil_usuario 
+            SET puntos = $1, racha_maxima = $2, badge_oro = $3, badge_diversidad = $4, rango_titulo = $5 
+            WHERE usuario_id = $6
+        """, d.get('puntos', 0), d.get('racha_maxima', 0), d.get('badge_oro', False), d.get('badge_diversidad', False), d.get('rango_titulo', 'Observador de Jardín'), user_id)
         return {"status": "actualizado"}

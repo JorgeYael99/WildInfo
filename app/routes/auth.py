@@ -43,6 +43,7 @@ async def registro(request: Request, user: UserAuth):
             VALUES ($1, $2) RETURNING id
         """, user.username, hashed_password)
         
+        # CORREGIDO: Se eliminó el campo id y el DEFAULT para acoplarse a tu base de datos
         await conn.execute("INSERT INTO perfil_usuario (usuario_id) VALUES ($1)", user_id)
         
         token = f"token_{user_id}_{user.username}"
