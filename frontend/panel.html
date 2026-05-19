@@ -3,18 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WildInfo - Explorador Pro</title>
+    <title>WildInfo - Panel de Explorador</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <header>
-        <h1>WildInfo</h1>
-        <p>Tu Enciclopedia Interactiva de Biodiversidad</p>
-        <button id="logoutBtn" style="position: absolute; top: 20px; right: 20px; background: none; border: 1px solid #4ade80; color: #4ade80; cursor: pointer; border-radius: 5px; padding: 5px 10px;">Cerrar Sesión</button>
-    </header>
+    <nav class="navbar">
+        <div class="navbar-brand">🌿 WildInfo</div>
+        <ul class="navbar-links">
+            <li><a href="panel.html" class="active">Panel</a></li>
+            <li><a href="perfil.html">Mi Perfil</a></li>
+        </ul>
+        <div class="navbar-user">
+            <span id="navUsername">Usuario</span>
+            <div class="avatar">👤</div>
+        </div>
+    </nav>
 
-    <main>
+    <main class="panel-main">
         <section id="panelExplorador" class="panel-explorador">
             <div class="rango-badge"><span id="iconoRango">🌱</span></div>
             <div class="rango-info">
@@ -26,12 +32,12 @@
                 <div id="badgeOro" class="badge-logro" title="Racha de 10 aciertos">🥇</div>
                 <div id="badgeDiversidad" class="badge-logro" title="5 Clases diferentes">🌿</div>
             </div>
-            <button id="btnQuiz" class="btn-quiz">Reto Quiz 🧠</button>
+            <button id="btnQuiz" class="btn-quiz">🧠 Reto Quiz</button>
         </section>
 
         <section class="buscador-container">
             <div class="search-wrapper">
-                <input type="text" id="animalInput" placeholder="Busca oso, águila, ballena..." autocomplete="off">
+                <input type="text" id="animalInput" placeholder="Busca tigre, águila, ballena..." autocomplete="off">
                 <div id="suggestions" class="suggestions-box hidden"></div>
             </div>
             <button id="buscarBtn">Explorar</button>
@@ -55,7 +61,7 @@
                 </div>
                 <div id="wikipedia" class="wikipedia">
                     <p id="resumenWikipedia"></p>
-                    <a id="enlaceWikipedia" href="#" target="_blank" class="wiki-link">Leer más en Wikipedia</a>
+                    <a id="enlaceWikipedia" href="#" target="_blank" class="wiki-link">Leer más en Wikipedia →</a>
                 </div>
                 <button id="guardarBtn" class="btn-guardar">Añadir a mi Enciclopedia</button>
             </div>
@@ -79,7 +85,6 @@
             </div>
             <div id="listaPeligro" class="grid-especie"></div>
         </section>
-
     </main>
 
     <div id="quizModal" class="modal hidden">
@@ -112,20 +117,13 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/app.js"></script>
     <script>
-        // Verificar autenticación al cargar
         const sesionGuardada = localStorage.getItem('usuario_wildinfo');
         if (!sesionGuardada) {
             window.location.href = 'login.html';
+        } else {
+            const sesion = JSON.parse(sesionGuardada);
+            document.getElementById('navUsername').textContent = sesion.username || 'Usuario';
         }
-        
-        // Cerrar sesión
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            try {
-                await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
-            } catch (e) { console.error(e); }
-            localStorage.removeItem('usuario_wildinfo');
-            window.location.href = 'index.html';
-        });
     </script>
 </body>
 </html>

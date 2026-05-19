@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - WildInfo</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">🌿 WildInfo</div>
+    <ul class="navbar-links">
+        <li><a href="panel.html">Panel</a></li>
+        <li><a href="perfil.html" class="active">Mi Perfil</a></li>
+    </ul>
+    <div class="navbar-user">
+        <span id="navUsername">Usuario</span>
+        <div class="avatar">👤</div>
+    </div>
+</nav>
+
+<main class="perfil-page">
+
+    <!-- HEADER -->
+    <div class="perfil-header">
+        <div class="perfil-avatar">🌿</div>
+        <h2 id="perfilUsername">Cargando...</h2>
+        <p id="perfilMiembro">Miembro desde: --</p>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div class="perfil-card">
+        <h3>📊 Estadísticas de Explorador</h3>
+        <div class="perfil-stats">
+            <div class="stat-box">
+                <span class="stat-num" id="statPuntos">0</span>
+                <span class="stat-label">Puntos</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="statRacha">0</span>
+                <span class="stat-label">Mejor Racha</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="statRango">-</span>
+                <span class="stat-label">Rango</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="statEspecies">0</span>
+                <span class="stat-label">Especies</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR USUARIO -->
+    <div class="perfil-card">
+        <h3>✏️ Editar Nombre de Usuario</h3>
+        <form id="formUsername" class="perfil-form">
+            <div class="input-group">
+                <label for="newUsername">Nuevo nombre de usuario</label>
+                <input type="text" id="newUsername" required minlength="3" autocomplete="username">
+            </div>
+            <div id="errorUsername" class="error-msg"></div>
+            <div id="successUsername" class="success-msg"></div>
+            <button type="submit" class="btn btn-primary btn-sm">Actualizar Usuario</button>
+        </form>
+    </div>
+
+    <!-- CAMBIAR CONTRASEÑA -->
+    <div class="perfil-card">
+        <h3>🔒 Cambiar Contraseña</h3>
+        <form id="formPassword" class="perfil-form">
+            <div class="input-group">
+                <label for="currentPassword">Contraseña actual</label>
+                <input type="password" id="currentPassword" required autocomplete="current-password">
+            </div>
+            <div class="input-group">
+                <label for="newPassword">Nueva contraseña</label>
+                <input type="password" id="newPassword" required minlength="4" autocomplete="new-password">
+            </div>
+            <div class="input-group">
+                <label for="confirmPassword">Confirmar nueva contraseña</label>
+                <input type="password" id="confirmPassword" required minlength="4" autocomplete="new-password">
+            </div>
+            <div id="errorPassword" class="error-msg"></div>
+            <div id="successPassword" class="success-msg"></div>
+            <button type="submit" class="btn btn-primary btn-sm">Cambiar Contraseña</button>
+        </form>
+    </div>
+
+    <!-- CERRAR SESIÓN -->
+    <div class="perfil-card" style="text-align:center;">
+        <button id="logoutBtnPerfil" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+    </div>
+
+</main>
+
+<script>
+    const API_URL = 'http://localhost:8000';
+    const sesion = JSON.parse(localStorage.getItem('usuario_wildinfo') || 'null');
+    if (!sesion) { window.location.href = 'index.html'; }
+
+    function getHeaders() {
+        return {
+            'Authorization': `Bearer ${sesion.token}`,
+            'X-User-Id': sesion.user_id,
+            'X-Username': sesion.username || ''
+        };
+    }
+
+    // Cargar datos del perfil
+    async function cargarPerfil() {
+        try {
+            const res = await fetch(`${API_URL}/perfil/${sesion.user_id}`, { headers: getHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('perfilUsername').textContent = data.username || sesion.username;
+                document.getElementById('navUsername').textContent = data.username || sesion.username;
+                document.getElementById('perfilMiembro').textContent = data.fecha_creacion 
+                    ? `Miembro desde: ${new Date(data.fecha_creacion).toLocaleDateString('es-ES', { year:'numeric', month:'long' })}`
+                    : 'Miembro desde: --';
+                document.getElementById('statPuntos').textContent = data.puntos ?? 0;
+                document.getElementById('statRacha').textContent = data.racha_maxima ?? 0;
+                document.getElementById('statRango').textContent = data.rango_titulo || 'Observador';
+                document.getElementById('statEspecies').textContent = data.total_especies ?? 0;
+                document.getElementById('newUsername').placeholder = data.username || 'nuevo_usuario';
+            }
+        } catch (e) { console.error('Error cargando perfil:', e); }
+    }
+
+    // Actualizar username
+    document.getElementById('formUsername').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newUsername = document.getElementById('newUsername').value.trim();
+        const err = document.getElementById('errorUsername');
+        const suc = document.getElementById('successUsername');
+        err.style.display = 'none'; suc.style.display = 'none';
+        if (!newUsername || newUsername.length < 3) {
+            err.textContent = 'El nombre debe tener al menos 3 caracteres';
+            err.style.display = 'block'; return;
+        }
+        try {
+            const res = await fetch(`${API_URL}/perfil/${sesion.user_id}/username`, {
+                method: 'PUT',
+                headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: newUsername })
+            });
+            if (res.ok) {
+                sesion.username = newUsername;
+                localStorage.setItem('usuario_wildinfo', JSON.stringify(sesion));
+                suc.textContent = '✅ Nombre actualizado correctamente';
+                suc.style.display = 'block';
+                document.getElementById('perfilUsername').textContent = newUsername;
+                document.getElementById('navUsername').textContent = newUsername;
+                document.getElementById('newUsername').value = '';
+            } else {
+                const d = await res.json();
+                err.textContent = d.detail || 'Error al actualizar';
+                err.style.display = 'block';
+            }
+        } catch (e) {
+            err.textContent = 'Error de conexión';
+            err.style.display = 'block';
+        }
+    });
+
+    // Cambiar contraseña
+    document.getElementById('formPassword').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const current = document.getElementById('currentPassword').value;
+        const newPwd = document.getElementById('newPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const err = document.getElementById('errorPassword');
+        const suc = document.getElementById('successPassword');
+        err.style.display = 'none'; suc.style.display = 'none';
+        if (newPwd !== confirm) {
+            err.textContent = 'Las contraseñas no coinciden';
+            err.style.display = 'block'; return;
+        }
+        if (newPwd.length < 4) {
+            err.textContent = 'Mínimo 4 caracteres';
+            err.style.display = 'block'; return;
+        }
+        try {
+            const res = await fetch(`${API_URL}/perfil/${sesion.user_id}/password`, {
+                method: 'PUT',
+                headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_password: current, new_password: newPwd })
+            });
+            if (res.ok) {
+                suc.textContent = '✅ Contraseña cambiada correctamente';
+                suc.style.display = 'block';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } else {
+                const d = await res.json();
+                err.textContent = d.detail || 'Error al cambiar contraseña';
+                err.style.display = 'block';
+            }
+        } catch (e) {
+            err.textContent = 'Error de conexión';
+            err.style.display = 'block';
+        }
+    });
+
+    // Logout
+    document.getElementById('logoutBtnPerfil').addEventListener('click', async () => {
+        try { await fetch(`${API_URL}/auth/logout`, { method: 'POST' }); } catch(e) {}
+        localStorage.removeItem('usuario_wildinfo');
+        window.location.href = 'index.html';
+    });
+
+    cargarPerfil();
+</script>
+</body>
+</html>

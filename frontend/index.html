@@ -3,106 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WildInfo - Explorador Pro</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>WildInfo - Enciclopedia de Biodiversidad</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <header>
-        <h1>WildInfo</h1>
-        <p>Tu Enciclopedia Interactiva de Biodiversidad</p>
-    </header>
 
-    <main>
-        <section id="panelExplorador" class="panel-explorador">
-            <div class="rango-badge"><span id="iconoRango">🌱</span></div>
-            <div class="rango-info">
-                <h3 id="tituloRango">Cargando...</h3>
-                <p id="statsExplorador">Especies: 0 | Clases: 0</p>
-                <div class="barra-progreso"><div id="progresoRango" class="progreso-fill"></div></div>
-            </div>
-            <div class="logros-container">
-                <div id="badgeOro" class="badge-logro" title="Racha de 5 aciertos">🥇</div>
-                <div id="badgeDiversidad" class="badge-logro" title="5 Clases diferentes">🌿</div>
-            </div>
-            <button id="btnQuiz" class="btn-quiz">Reto Quiz 🧠</button>
-        </section>
-
-        <section class="buscador-container">
-            <div class="search-wrapper">
-                <input type="text" id="animalInput" placeholder="Busca oso, águila, helecho..." autocomplete="off">
-                <div id="suggestions" class="suggestions-box hidden"></div>
-            </div>
-            <button id="buscarBtn">Explorar</button>
-        </section>
-
-        <section id="resultado" class="resultado hidden">
-            <div class="animal-info">
-                <div class="header-resultado">
-                    <h2 id="animalNombre"></h2>
-                    <span id="statusBadge" class="badge hidden"></span>
-                </div>
-                <div class="detalles">
-                    <p><strong>Reino:</strong> <span id="animalReino"></span></p>
-                    <p><strong>Clase:</strong> <span id="animalClase"></span></p>
-                    <p><strong>Familia:</strong> <span id="animalFamilia"></span></p>
-                </div>
-                <div id="wikipedia" class="wikipedia hidden">
-                    <p id="resumenWikipedia"></p>
-                    <a id="enlaceWikipedia" href="#" target="_blank">Leer más</a>
-                </div>
-                <button id="guardarBtn" class="btn-guardar">Añadir a mi Enciclopedia</button>
-            </div>
-            <div class="animal-imagen"><img id="animalImagen" src="" alt=""></div>
-            <div id="mapaContainer" class="mapa-container hidden">
-                <h3>🌍 Distribución Geográfica</h3>
-                <div id="mapa" class="mapa-leaflet"></div>
-            </div>
-        </section>
-
-        <section class="biblioteca-educativa">
-            <div id="contenedorCarpetas"></div>
-        </section>
-
-        <section id="santuarioRiesgo" class="santuario-riesgo hidden">
-            <div class="santuario-header">
-                <h2>🔴 Santuario de Especies en Peligro</h2>
-                <p>Estas especies están luchando por su supervivencia. Aprender sobre ellas es el primer paso para protegerlas.</p>
-            </div>
-            <div id="listaPeligro" class="grid-especie">
+<!-- ========== HERO ========== -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-logo">
+            🌿 Wild<span>Info</span>
         </div>
-        </section>
-
-    </main>
-
-    <div id="quizModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-
-            <div id="quizJuego">
-                <div class="quiz-header">
-                    <div class="quiz-progress-bar"><div id="quizProgresoFill" class="quiz-progreso-fill"></div></div>
-                    <span id="quizContador">Pregunta 1 / 10</span>
-                </div>
-
-                <div class="quiz-stats">
-                    <span id="quizRacha">🔥 0</span>
-                    <span id="quizTimer">⏱️ 15s</span>
-                </div>
-
-                <div class="quiz-timer-bar"><div id="quizTimerBar"></div></div>
-
-                <h2 id="preguntaTexto"></h2>
-                <img id="quizImagen" src="" alt="Imagen para el quiz">
-                <div id="opcionesContainer" class="grid-opciones"></div>
-                <div id="quizFeedback" class="quiz-feedback hidden"></div>
-            </div>
-
-            <div id="quizResultados" class="quiz-resultados hidden"></div>
+        <p class="hero-sub">Tu Enciclopedia Interactiva de Biodiversidad</p>
+        <p class="hero-desc">
+            Explora el reino animal, descubre especies en peligro de extinción,
+            aprende con quizzes interactivos y visualiza su distribución geográfica
+            en tiempo real.
+        </p>
+        <div class="hero-actions">
+            <a href="login.html" class="btn btn-primary">
+                <span class="hero-paw">🐾</span> Iniciar Sesión
+            </a>
+            <a href="registro.html" class="btn btn-outline">
+                Crear Cuenta
+            </a>
         </div>
     </div>
+</section>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/app.js"></script>
+<!-- ========== FEATURES ========== -->
+<section class="section" id="caracteristicas">
+    <h2 class="section-title">¿Qué puedes hacer en WildInfo?</h2>
+    <p class="section-sub">Herramientas diseñadas para exploradores de la naturaleza</p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3>Buscar cualquier animal</h3>
+            <p>Obtén información detallada sobre hábitat, dieta, peso, velocidad y más de cientos de especies.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🌍</div>
+            <h3>Mapa de distribución</h3>
+            <p>Visualiza en un mapa interactivo las regiones donde habita cada especie con datos reales de GBIF.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>Quiz interactivo</h3>
+            <p>Pon a prueba tus conocimientos con preguntas sobre clasificación y peligro de extinción.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📚</div>
+            <h3>Enciclopedia personal</h3>
+            <p>Guarda tus especies favoritas y construye tu propia colección de biodiversidad.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔥</div>
+            <h3>Santuario en peligro</h3>
+            <p>Descubre las especies que están luchando por su supervivencia y aprende cómo ayudarlas.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🏆</div>
+            <h3>Logros y rangos</h3>
+            <p>Gana puntos, desbloquea insignias y sube de rango mientras exploras el mundo animal.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ========== CARRUSEL ========== -->
+<section class="section carousel-section" id="carrusel">
+    <h2 class="section-title">Especies en Peligro de Extinción</h2>
+    <p class="section-sub">Conócelas. Son las que más necesitan nuestra atención.</p>
+
+    <div class="carousel">
+        <button class="carousel-btn carousel-prev" id="carPrev" aria-label="Anterior">‹</button>
+        <div class="carousel-track" id="carTrack"></div>
+        <button class="carousel-btn carousel-next" id="carNext" aria-label="Siguiente">›</button>
+    </div>
+    <div class="carousel-dots" id="carDots"></div>
+</section>
+
+<!-- ========== CTA FINAL ========== -->
+<section class="section" style="text-align:center; padding-bottom:2rem;">
+    <h2 class="section-title" style="margin-bottom:1rem;">¿Listo para explorar?</h2>
+    <p class="section-sub" style="margin-bottom:2rem;">
+        Únete a la comunidad de exploradores y descubre la maravillosa diversidad de nuestro planeta.
+    </p>
+    <a href="registro.html" class="btn btn-primary" style="font-size:1.1rem; padding:1rem 2.5rem;">
+        Crear Cuenta Gratis
+    </a>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="landing-footer">
+    <p>🌿 WildInfo &mdash; Enciclopedia Interactiva de Biodiversidad &bull; Hecho con ❤️ para la naturaleza</p>
+</footer>
+
+<script src="js/app.js"></script>
+<script>
+    /* ========== CARRUSEL ========== */
+    const CARRUSEL_ESPECIES = [
+        { nombre: 'Tigre de Bengala', nombreCientifico: 'Panthera tigris', peligro: 'En Peligro', img: '' },
+        { nombre: 'Elefante Africano', nombreCientifico: 'Loxodonta africana', peligro: 'Vulnerable', img: '' },
+        { nombre: 'Oso Polar', nombreCientifico: 'Ursus maritimus', peligro: 'Vulnerable', img: '' },
+        { nombre: 'Leopardo de las Nieves', nombreCientifico: 'Panthera uncia', peligro: 'Vulnerable', img: '' },
+        { nombre: 'Gorila de Montaña', nombreCientifico: 'Gorilla beringei beringei', peligro: 'En Peligro Crítico', img: '' },
+        { nombre: 'Pingüino Emperador', nombreCientifico: 'Aptenodytes forsteri', peligro: 'Casi Amenazado', img: '' },
+    ];
+
+    const CAR_TRACK = document.getElementById('carTrack');
+    const CAR_DOTS = document.getElementById('carDots');
+    let carIndex = 0;
+    let carTimer = null;
+
+    function crearSlide(especie) {
+        const slide = document.createElement('div');
+        slide.className = 'carousel-slide';
+        slide.innerHTML = `
+            <img src="${especie.img || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Lion_waiting_in_Namibia.jpg/800px-Lion_waiting_in_Namibia.jpg'}" 
+                 alt="${especie.nombre}"
+                 onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Endangered_animal_species_%28Animals_%26_All%29.jpg/800px-Endangered_animal_species_%28Animals_%26_All%29.jpg'">
+            <div class="carousel-overlay">
+                <h3>${especie.nombre}</h3>
+                <p>${especie.nombreCientifico} &middot; <strong>${especie.peligro}</strong></p>
+            </div>
+        `;
+        return slide;
+    }
+
+    function renderCarousel() {
+        CAR_TRACK.innerHTML = '';
+        CAR_DOTS.innerHTML = '';
+        CARRUSEL_ESPECIES.forEach((e, i) => {
+            CAR_TRACK.appendChild(crearSlide(e));
+            const dot = document.createElement('button');
+            dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+            dot.setAttribute('data-index', i);
+            dot.addEventListener('click', () => goToSlide(i));
+            CAR_DOTS.appendChild(dot);
+        });
+        // Cargar imagenes reales de Unsplash
+        CARRUSEL_ESPECIES.forEach((e, i) => {
+            fetch(`${API_URL}/animales/imagen/${encodeURIComponent(e.nombre)}`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.url_imagen) {
+                        const img = CAR_TRACK.children[i]?.querySelector('img');
+                        if (img) img.src = d.url_imagen;
+                    }
+                })
+                .catch(() => {});
+        });
+    }
+
+    function goToSlide(idx) {
+        carIndex = idx;
+        CAR_TRACK.style.transform = `translateX(-${carIndex * 100}%)`;
+        document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+            d.classList.toggle('active', i === carIndex);
+        });
+        resetTimer();
+    }
+
+    function resetTimer() {
+        if (carTimer) clearInterval(carTimer);
+        carTimer = setInterval(() => goToSlide((carIndex + 1) % CARRUSEL_ESPECIES.length), 4000);
+    }
+
+    document.getElementById('carPrev').addEventListener('click', () => {
+        goToSlide((carIndex - 1 + CARRUSEL_ESPECIES.length) % CARRUSEL_ESPECIES.length);
+    });
+    document.getElementById('carNext').addEventListener('click', () => {
+        goToSlide((carIndex + 1) % CARRUSEL_ESPECIES.length);
+    });
+
+    renderCarousel();
+    resetTimer();
+</script>
 </body>
 </html>
