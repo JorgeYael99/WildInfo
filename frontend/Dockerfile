@@ -1,16 +1,16 @@
 FROM nginx:alpine
 
-# Copiar archivos estáticos
+# Instalar gettext (contiene envsubst)
+RUN apk add --no-cache gettext
+
+# Copiar archivos estáticos del frontend
 COPY . /usr/share/nginx/html
 
-# Eliminar configuración por defecto de Nginx
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Copiar nuestra configuración personalizada
-COPY nginx.conf.template /etc/nginx/conf.d/default.conf
+# Copiar la plantilla de configuración
+COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 
 # Exponer puerto
 EXPOSE 80
 
-# Iniciar Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Al arrancar, reemplazar ${BACKEND_URL} y generar el archivo real
+CMD ["/bin/sh", "-c", "envsubst '${BACKEND_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

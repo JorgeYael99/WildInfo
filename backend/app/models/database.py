@@ -27,6 +27,19 @@ async def init_db(pool):
                 rango_titulo VARCHAR(100) DEFAULT 'Observador de Jardín'
             )
         """)
+        # Migración: la tabla vieja tenía columna "id" extra, la eliminamos
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'perfil_usuario' AND column_name = 'id'
+                ) THEN
+                    ALTER TABLE perfil_usuario DROP COLUMN id;
+                    ALTER TABLE perfil_usuario ADD PRIMARY KEY (usuario_id);
+                END IF;
+            END $$;
+        """)
         
         # 3. Tabla de Animales (vinculada al usuario)
         await conn.execute("""
