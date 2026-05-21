@@ -1,5 +1,7 @@
 /* --- CONFIGURACIÓN INICIAL --- */
-const API_URL = '/api';
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? '/api'
+    : 'https://wildinfo-api.onrender.com';
 
 function getAuthHeaders() {
     const userData = JSON.parse(localStorage.getItem('usuario_wildinfo') || '{}');

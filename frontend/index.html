@@ -104,7 +104,7 @@
 <script src="js/app.js"></script>
 <script>
     /* ========== CARRUSEL ========== */
-    const API_URL = '/api';
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://wildinfo-api.onrender.com';
     const CARRUSEL_ESPECIES = [
         { nombre: 'Tigre de Bengala', nombreCientifico: 'Panthera tigris', peligro: 'En Peligro', img: '' },
         { nombre: 'Elefante Africano', nombreCientifico: 'Loxodonta africana', peligro: 'Vulnerable', img: '' },
