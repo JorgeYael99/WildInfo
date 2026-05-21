@@ -1,6 +1,5 @@
 /* --- CONFIGURACIÓN INICIAL --- */
-const API_URL = 'http://localhost:8000';
-const API_SECRET_KEY = 'Cisco_Net_2026_ClaveSegura';
+const API_URL = '/api';
 
 function getAuthHeaders() {
     const userData = JSON.parse(localStorage.getItem('usuario_wildinfo') || '{}');
@@ -13,10 +12,7 @@ function getAuthHeaders() {
 }
 
 function getSecureHeaders() {
-    return {
-        ...getAuthHeaders(),
-        'X-API-KEY': API_SECRET_KEY
-    };
+    return { ...getAuthHeaders() };
 }
 
 let animalActual = null;
@@ -554,7 +550,7 @@ async function cargarFavoritos() {
 function generarHTML(a, esPeligro) {
     return `
     <div class="tarjeta-animal ${esPeligro ? 'tarjeta-peligro' : ''}" onclick="seleccionar('${a.nombre}')">
-        <div class="tarjeta-imagen-container"><img src="${a.url_imagen}" alt="${a.nombre}"></div>
+        <div class="tarjeta-imagen-container"><img src="${a.url_imagen}" alt="${a.nombre}" loading="lazy"></div>
         <div class="info-compacta">
             <h4>${a.nombre}</h4>
             <p>${esPeligro ? '⚠️ RIESGO CRÍTICO' : (a.familia || 'Especie')}</p>

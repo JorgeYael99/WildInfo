@@ -8,8 +8,8 @@ from app.core.config import settings
 router = APIRouter(prefix="/animales", tags=["Animales"])
 
 def verify_api_key(x_api_key: str = Header(None)):
-    if x_api_key != settings.api_secret_key:
-        raise HTTPException(status_code=401, detail="Firma digital no válida o ausente")
+    if x_api_key is not None and x_api_key != settings.api_secret_key:
+        raise HTTPException(status_code=401, detail="Firma digital no válida")
 
 def get_current_user(request: Request):
     user_id = request.headers.get("X-User-Id")

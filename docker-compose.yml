@@ -1,20 +1,22 @@
 services:
   app:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: wildinfo-api
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      - PYTHONPATH=/code
+      - PYTHONPATH=/app
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    networks:
+      - wildinfo-network
 
   db:
     image: postgres:15-alpine
@@ -32,15 +34,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - wildinfo-network
 
   frontend:
     build: ./frontend
     container_name: wildinfo-frontend
     ports:
       - "80:80"
+    environment:
+      - BACKEND_URL=http://app:8000
     depends_on:
       - app
     restart: unless-stopped
+    networks:
+      - wildinfo-network
+
+networks:
+  wildinfo-network:
+    driver: bridge
 
 volumes:
   postgres_data:

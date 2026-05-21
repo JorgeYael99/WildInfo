@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
@@ -13,17 +14,30 @@ async def lifespan(app: FastAPI):
     yield
     await app.state.db_pool.close()
 
-app = FastAPI(title="WildInfo Pro", lifespan=lifespan)
+app = FastAPI(
+    title="WildInfo Pro",
+    lifespan=lifespan,
+    debug=(settings.environment == "development")
+)
 
+origins = [o.strip() for o in settings.origen_permitido.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5500", "http://127.0.0.1:5500", "http://localhost", "http://127.0.0.1", "null"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Conectamos las rutas
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    if settings.environment == "development":
+        raise exc
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Error interno del servidor"}
+    )
+
 app.include_router(auth.router)
 app.include_router(animales.router)
 app.include_router(perfil.router)

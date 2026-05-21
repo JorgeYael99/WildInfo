@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WildInfo - Enciclopedia interactiva de biodiversidad. Explora el reino animal, descubre especies en peligro de extinción y aprende con quizzes.">
+    <meta name="theme-color" content="#4a7c59">
     <title>WildInfo - Enciclopedia de Biodiversidad</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -102,6 +104,7 @@
 <script src="js/app.js"></script>
 <script>
     /* ========== CARRUSEL ========== */
+    const API_URL = '/api';
     const CARRUSEL_ESPECIES = [
         { nombre: 'Tigre de Bengala', nombreCientifico: 'Panthera tigris', peligro: 'En Peligro', img: '' },
         { nombre: 'Elefante Africano', nombreCientifico: 'Loxodonta africana', peligro: 'Vulnerable', img: '' },
@@ -120,8 +123,9 @@
         const slide = document.createElement('div');
         slide.className = 'carousel-slide';
         slide.innerHTML = `
-            <img src="${especie.img || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Lion_waiting_in_Namibia.jpg/800px-Lion_waiting_in_Namibia.jpg'}" 
+                <img src="${especie.img || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Lion_waiting_in_Namibia.jpg/800px-Lion_waiting_in_Namibia.jpg'}" 
                  alt="${especie.nombre}"
+                 loading="lazy"
                  onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Endangered_animal_species_%28Animals_%26_All%29.jpg/800px-Endangered_animal_species_%28Animals_%26_All%29.jpg'">
             <div class="carousel-overlay">
                 <h3>${especie.nombre}</h3>

@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     origen_permitido: str = Field(alias="ORIGEN_PERMITIDO")
     api_secret_key: str = Field(alias="API_SECRET_KEY")
 
+    # Entorno
+    environment: str = Field(default="development", alias="ENVIRONMENT")
+
     # Indica que busque el archivo en la raíz del proyecto
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
