@@ -97,7 +97,7 @@
 </main>
 
     <script>
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : 'https://wildinfo-api.onrender.com';
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/api' : window.location.protocol + '//' + window.location.hostname.replace(/^([^.]+)/, '$1-api');
     const sesion = JSON.parse(localStorage.getItem('usuario_wildinfo') || 'null');
     if (!sesion) { window.location.href = 'index.html'; }
 
